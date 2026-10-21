@@ -1,0 +1,50 @@
+{
+  "id": "la-la-land-2016",
+  "title": "La La Land",
+  "year": 2016,
+  "status": "watched",
+  "favorite": false,
+  "rating": 4,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "A jazz pianist and an aspiring actress fall in love in Los Angeles while chasing their dreams — and find out what those dreams will cost them.",
+  "directors": [
+    "Damien Chazelle"
+  ],
+  "cast": [
+    {
+      "name": "Ryan Gosling",
+      "character": "Sebastian"
+    },
+    {
+      "name": "Emma Stone",
+      "character": "Mia"
+    }
+  ],
+  "genres": [
+    "Romance",
+    "Music",
+    "Drama"
+  ],
+  "runtime": 128,
+  "watchDates": [
+    "2026-05-22"
+  ],
+  "review": "The epilogue is a whole movie in seven minutes.",
+  "reflections": "",
+  "notes": "",
+  "highlights": [
+    {
+      "id": "la-la-land-2016-h0",
+      "text": "The planetarium waltz."
+    }
+  ],
+  "tags": [
+    "sample",
+    "jazz"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-25T12:00:00.000Z",
+  "updatedAt": "2026-09-25T12:00:00.000Z"
+}

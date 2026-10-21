@@ -1,0 +1,58 @@
+# Movie Diary
+
+A cozy, local-first movie diary. A 3D windowsill scene at night sits on top: a black cat, a steaming mug and a warm lamp, with the stars outside. Below it is your film collection: what you've watched, what you want to watch, your ratings, reviews, reflections, highlights and notes.
+
+Everything is stored as plain JSON files on your own machine. No account, no cloud.
+
+![stack](https://img.shields.io/badge/Next.js-16-black) ![three](https://img.shields.io/badge/three.js-r186-049ef4)
+
+## Quick start
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. On first run, a `data/` folder is created and filled with a few sample films so the shelf isn't empty. Delete them whenever you like.
+
+### Optional: automatic posters, story & cast
+
+1. Get a free API key at https://www.themoviedb.org/settings/api.
+2. `cp .env.example .env.local` and paste it into `TMDB_API_KEY=`.
+3. Restart `npm run dev`.
+
+**Add film** (or ⌘K) then searches TMDB. Picking a result fills in the poster, backdrop, story, cast, director, genres and runtime. Images are downloaded into `data/`, so everything keeps working offline. Films you added by hand can be linked later with **Fill in from TMDB** on their page.
+
+Without a key, you add films by title and year and can upload your own poster (click or drag onto the poster).
+
+## Where your data lives
+
+```
+data/
+  movies/<id>.json    one file per film; readable, diff-able, easy to back up
+  posters/            poster images
+  backdrops/          backdrop images
+```
+
+`data/` is git-ignored, so cloning the repo gives everyone their own empty cinema. To keep your library somewhere else (a synced folder, for example), set `CINEMA_DATA_DIR=/absolute/path` in `.env.local`.
+
+## Using it
+
+- **Collection**: filter by All / Watched / To Watch / Favorites, search across title, director, cast and tags, sort, and switch between grid and list.
+- **Film page**: everything saves automatically as you type. Status, favorite, half-star rating, viewings (rewatches add a date), story, review, reflections, highlights (with an optional timestamp), notes, tags and cast.
+- **Diary**: every viewing in date order, grouped by month.
+- **The scene**: click the lamp to turn it off for a moonlit room; the cat falls asleep. Click the cat to pet it. The camera drifts gently with your pointer.
+
+## Personalise
+
+- Title, tagline and footer text: `src/config.ts`
+- Colours and fonts: the tokens at the top of `src/app/globals.css`, fonts in `src/app/layout.tsx`
+- Scene lighting, colours and camera: see [docs/scene.md](docs/scene.md)
+
+## Docs
+
+- [docs/architecture.md](docs/architecture.md): how the app is put together, the data model and API
+- [docs/scene.md](docs/scene.md): the three.js scene, the shaders, and how to update the Blender model
+- [docs/rive-cat.md](docs/rive-cat.md): the 2D Rive cat; rebuilding it with `npm run cat`, or swapping in your own art
+- [docs/design.md](docs/design.md): visual language: palette, type, components
+- [docs/questions.md](docs/questions.md): open decisions and ideas for what's next

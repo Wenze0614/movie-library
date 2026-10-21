@@ -1,0 +1,42 @@
+{
+  "id": "in-the-mood-for-love-2000",
+  "title": "In the Mood for Love",
+  "originalTitle": "花樣年華",
+  "year": 2000,
+  "status": "watchlist",
+  "favorite": false,
+  "rating": null,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "Hong Kong, 1962. Two neighbours discover their spouses are having an affair, and slowly form a bond of their own that neither will act on.",
+  "directors": [
+    "Wong Kar-wai"
+  ],
+  "cast": [
+    {
+      "name": "Tony Leung Chiu-wai",
+      "character": "Chow Mo-wan"
+    },
+    {
+      "name": "Maggie Cheung",
+      "character": "Su Li-zhen"
+    }
+  ],
+  "genres": [
+    "Drama",
+    "Romance"
+  ],
+  "runtime": 98,
+  "watchDates": [],
+  "review": "",
+  "reflections": "",
+  "notes": "",
+  "highlights": [],
+  "tags": [
+    "sample"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-23T12:00:00.000Z",
+  "updatedAt": "2026-09-23T12:00:00.000Z"
+}

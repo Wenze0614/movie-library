@@ -1,0 +1,29 @@
+'use client';
+import type { Movie, MoviePatch, TmdbSearchResult } from './types';
+
+async function json<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Request failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  create: (body: Partial<Movie> & { tmdbId?: number }) =>
+    fetch('/api/movies', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(json<Movie>),
+  update: (id: string, patch: MoviePatch) =>
+    fetch(`/api/movies/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch) }).then(json<Movie>),
+  remove: (id: string) => fetch(`/api/movies/${id}`, { method: 'DELETE' }),
+  linkTmdb: (id: string, tmdbId: number) =>
+    fetch(`/api/movies/${id}/tmdb`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tmdbId }) }).then(json<Movie>),
+  uploadPoster: (id: string, file: File) => {
+    const form = new FormData();
+    form.set('file', file);
+    return fetch(`/api/movies/${id}/poster`, { method: 'POST', body: form }).then(json<Movie>);
+  },
+  searchTmdb: (q: string, signal?: AbortSignal) =>
+    fetch(`/api/tmdb/search?q=${encodeURIComponent(q)}`, { signal }).then(
+      json<{ enabled: boolean; results: TmdbSearchResult[]; error?: string }>,
+    ),
+};

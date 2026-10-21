@@ -1,0 +1,51 @@
+{
+  "id": "your-name-2016",
+  "title": "Your Name.",
+  "originalTitle": "君の名は。",
+  "year": 2016,
+  "status": "watched",
+  "favorite": false,
+  "rating": 4,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "A high-school boy in Tokyo and a girl in a mountain town start waking up in each other's bodies. As they leave notes for each other, they discover the link between them is tied to a comet and a disaster.",
+  "directors": [
+    "Makoto Shinkai"
+  ],
+  "cast": [
+    {
+      "name": "Ryunosuke Kamiki",
+      "character": "Taki (voice)"
+    },
+    {
+      "name": "Mone Kamishiraishi",
+      "character": "Mitsuha (voice)"
+    }
+  ],
+  "genres": [
+    "Animation",
+    "Romance",
+    "Drama"
+  ],
+  "runtime": 106,
+  "watchDates": [
+    "2026-08-02"
+  ],
+  "review": "Gorgeous skies, and a twist that hits harder than it has any right to.",
+  "reflections": "",
+  "notes": "Twilight (\"kataware-doki\") as the moment two worlds overlap — lovely idea.",
+  "highlights": [
+    {
+      "id": "your-name-2016-h0",
+      "text": "The comet splitting over Itomori."
+    }
+  ],
+  "tags": [
+    "sample",
+    "anime"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-30T12:00:00.000Z",
+  "updatedAt": "2026-09-30T12:00:00.000Z"
+}

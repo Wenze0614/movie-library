@@ -1,0 +1,29 @@
+{
+  "name": "movie-diary",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A cozy, local-first movie diary with a 3D windowsill scene.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "postinstall": "node -e \"require('fs').mkdirSync('public/rive',{recursive:true});require('fs').copyFileSync('node_modules/@rive-app/canvas/rive.wasm','public/rive/rive.wasm')\"",
+    "cat": "cd art/rive-cat && python3 generate.py && rive . --once && cp build/cat.riv ../../public/rive/cat.riv"
+  },
+  "dependencies": {
+    "@rive-app/canvas": "^2.45.0",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.9.3"
+  }
+}

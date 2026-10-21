@@ -1,0 +1,61 @@
+{
+  "id": "spirited-away-2001",
+  "title": "Spirited Away",
+  "originalTitle": "千と千尋の神隠し",
+  "year": 2001,
+  "status": "watched",
+  "favorite": true,
+  "rating": 4.5,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "On the way to a new home, ten-year-old Chihiro wanders into a spirit world where her parents are transformed. To save them she takes a job at a bathhouse for gods, and slowly learns who she is.",
+  "directors": [
+    "Hayao Miyazaki"
+  ],
+  "cast": [
+    {
+      "name": "Rumi Hiiragi",
+      "character": "Chihiro (voice)"
+    },
+    {
+      "name": "Miyu Irino",
+      "character": "Haku (voice)"
+    },
+    {
+      "name": "Mari Natsuki",
+      "character": "Yubaba (voice)"
+    }
+  ],
+  "genres": [
+    "Animation",
+    "Fantasy",
+    "Family"
+  ],
+  "runtime": 125,
+  "watchDates": [
+    "2026-09-14",
+    "2024-12-26"
+  ],
+  "review": "Still the most generous film I know. Every corner of the bathhouse feels lived in.",
+  "reflections": "This time I noticed how much of the film is about work — learning a job, being useful, earning a place. Chihiro grows up by doing small things well.",
+  "notes": "The music on the train scene carries the whole sequence with almost no dialogue.",
+  "highlights": [
+    {
+      "id": "spirited-away-2001-h0",
+      "text": "The silent train ride across the flooded sea."
+    },
+    {
+      "id": "spirited-away-2001-h1",
+      "text": "No-Face quietly sitting next to Chihiro on the train."
+    }
+  ],
+  "tags": [
+    "sample",
+    "ghibli",
+    "comfort"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-10-01T12:00:00.000Z",
+  "updatedAt": "2026-10-01T12:00:00.000Z"
+}

@@ -1,0 +1,57 @@
+{
+  "id": "perfect-days-2023",
+  "title": "Perfect Days",
+  "year": 2023,
+  "status": "watched",
+  "favorite": true,
+  "rating": 4.5,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "Hirayama cleans public toilets in Tokyo. His days repeat — cassette tapes, books, photographs of trees — and the film finds a whole life in that rhythm.",
+  "directors": [
+    "Wim Wenders"
+  ],
+  "cast": [
+    {
+      "name": "Koji Yakusho",
+      "character": "Hirayama"
+    },
+    {
+      "name": "Tokio Emoto",
+      "character": "Takashi"
+    },
+    {
+      "name": "Arisa Nakano",
+      "character": "Niko"
+    }
+  ],
+  "genres": [
+    "Drama"
+  ],
+  "runtime": 124,
+  "watchDates": [
+    "2026-10-04"
+  ],
+  "review": "Made me want to slow down. The final close-up is unforgettable.",
+  "reflections": "Routine as a form of attention, not boredom.",
+  "notes": "Soundtrack: Lou Reed, The Animals, Nina Simone.",
+  "highlights": [
+    {
+      "id": "perfect-days-2023-h0",
+      "text": "Komorebi — sunlight through leaves."
+    },
+    {
+      "id": "perfect-days-2023-h1",
+      "text": "The last drive at dawn."
+    }
+  ],
+  "tags": [
+    "sample",
+    "slow",
+    "comfort"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-27T12:00:00.000Z",
+  "updatedAt": "2026-09-27T12:00:00.000Z"
+}

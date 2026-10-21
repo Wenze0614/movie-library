@@ -1,0 +1,63 @@
+{
+  "id": "interstellar-2014",
+  "title": "Interstellar",
+  "year": 2014,
+  "status": "watched",
+  "favorite": true,
+  "rating": 4.5,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "With Earth failing, a former pilot leaves his children to travel through a wormhole in search of a new home for humanity — knowing every hour near the black hole costs years back home.",
+  "directors": [
+    "Christopher Nolan"
+  ],
+  "cast": [
+    {
+      "name": "Matthew McConaughey",
+      "character": "Cooper"
+    },
+    {
+      "name": "Anne Hathaway",
+      "character": "Brand"
+    },
+    {
+      "name": "Jessica Chastain",
+      "character": "Murph"
+    },
+    {
+      "name": "Michael Caine",
+      "character": "Professor Brand"
+    }
+  ],
+  "genres": [
+    "Science Fiction",
+    "Drama",
+    "Adventure"
+  ],
+  "runtime": 169,
+  "watchDates": [
+    "2026-07-19"
+  ],
+  "review": "The organ score and the docking scene are pure adrenaline.",
+  "reflections": "A film about the cost of time. The video-message scene is the emotional center for me.",
+  "notes": "",
+  "highlights": [
+    {
+      "id": "interstellar-2014-h0",
+      "text": "Cooper watching 23 years of messages."
+    },
+    {
+      "id": "interstellar-2014-h1",
+      "text": "The docking spin."
+    }
+  ],
+  "tags": [
+    "sample",
+    "space",
+    "rewatch"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-29T12:00:00.000Z",
+  "updatedAt": "2026-09-29T12:00:00.000Z"
+}

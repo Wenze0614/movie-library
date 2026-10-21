@@ -1,0 +1,47 @@
+{
+  "id": "the-grand-budapest-hotel-2014",
+  "title": "The Grand Budapest Hotel",
+  "year": 2014,
+  "status": "watched",
+  "favorite": false,
+  "rating": 4,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "Between the wars, a legendary concierge and his loyal lobby boy are pulled into a chase over a stolen painting and a contested fortune, across a fictional European republic.",
+  "directors": [
+    "Wes Anderson"
+  ],
+  "cast": [
+    {
+      "name": "Ralph Fiennes",
+      "character": "M. Gustave"
+    },
+    {
+      "name": "Tony Revolori",
+      "character": "Zero"
+    },
+    {
+      "name": "Saoirse Ronan",
+      "character": "Agatha"
+    }
+  ],
+  "genres": [
+    "Comedy",
+    "Drama"
+  ],
+  "runtime": 100,
+  "watchDates": [
+    "2026-06-08"
+  ],
+  "review": "A pastry box of a movie — precise, funny, and quietly sad underneath.",
+  "reflections": "",
+  "notes": "Three aspect ratios for three time periods.",
+  "highlights": [],
+  "tags": [
+    "sample"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-28T12:00:00.000Z",
+  "updatedAt": "2026-09-28T12:00:00.000Z"
+}

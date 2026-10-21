@@ -1,0 +1,45 @@
+{
+  "id": "past-lives-2023",
+  "title": "Past Lives",
+  "year": 2023,
+  "status": "watchlist",
+  "favorite": false,
+  "rating": null,
+  "poster": null,
+  "backdrop": null,
+  "tagline": "",
+  "overview": "Two childhood friends from Seoul are separated when one emigrates. Decades later they meet again in New York for one week.",
+  "directors": [
+    "Celine Song"
+  ],
+  "cast": [
+    {
+      "name": "Greta Lee",
+      "character": "Nora"
+    },
+    {
+      "name": "Teo Yoo",
+      "character": "Hae Sung"
+    },
+    {
+      "name": "John Magaro",
+      "character": "Arthur"
+    }
+  ],
+  "genres": [
+    "Drama",
+    "Romance"
+  ],
+  "runtime": 106,
+  "watchDates": [],
+  "review": "",
+  "reflections": "",
+  "notes": "",
+  "highlights": [],
+  "tags": [
+    "sample"
+  ],
+  "tmdbId": null,
+  "createdAt": "2026-09-24T12:00:00.000Z",
+  "updatedAt": "2026-09-24T12:00:00.000Z"
+}

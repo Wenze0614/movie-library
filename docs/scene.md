@@ -1,0 +1,93 @@
+# The windowsill scene
+
+Everything lives in `src/three/`. `Experience` is the entry point. React creates it once with a container element and calls `dispose()` on unmount.
+
+## What's in the GLB
+
+Measured from `public/models/windowsill_scene.glb`. Coordinates are three.js world space (Y up). Blender's Z-up is converted on export: Blender `(x, y, z)` becomes three `(x, z, -y)`.
+
+| Node name | What | World bounds (approx.) | Material in code |
+| --- | --- | --- | --- |
+| `window_sill` | the sill board | x −2…2, y −0.14…0.14, z ±5.7 | `woodMaterial` (cream, faint grain) |
+| `wall` | back wall with window hole + two side walls | x −2.4…2, y −0.4…5, z ±6 | `plasterMaterial` |
+| `window_wood` | window frame | x −2.2…−1.8, y 0.7…4.4, z −4.7…4.0 | `woodMaterial` (terracotta) |
+| `cat` | sleeping black cat; tail hangs over the front edge at z ≈ 3.5…4.3 | x 0.75…3.1, y −1.0…1.2, z 0.3…4.4 | 2D mode (default): invisible, shadow only, with the [Rive cat](rive-cat.md) drawn on top. 3D mode: `catMaterial` + 12 fur shells |
+| `mug` | hollow mug, inner radius ≈ 0.26 | centre (0, ·, −1.87), y 0.12…0.72 | `ceramicMaterial` + a coffee disc |
+| `table_light` | lamp: base + pole + dome shade, one mesh | centre (−0.9, ·, −3.84), shade y 0.8…1.84 | `lampMaterial` |
+| `tree_branch_1/2` | ivy outside the window (UV-mapped) | x −3.8…−2.0 | `ivyMaterial` + `textures/ivy_basecolor.jpg` |
+
+Camera-wise, **screen-right is −Z**. The cat is on the left, the lamp on the right.
+
+**Materials are assigned by node name** (`byName` in `Experience.load`). If you rename an object in Blender, update that map. Unknown meshes fall back to plaster, so new objects show up immediately.
+
+Added in code, so any screen shape looks complete:
+- a front wall with a hole around the alcove, and a ceiling over it (`addRoomShell`)
+- a coffee surface, a glowing bulb, steam, dust (`addProps`)
+- the sky and landscape outside (`outside.ts`)
+
+## Lighting model (`glsl.ts → roomLight`)
+
+All room materials are `ShaderMaterial`s sharing one set of uniforms (`createSharedUniforms`), so the whole room responds together:
+
+- **Lamp**: a point light at the bulb with soft wrap diffuse and `1 / (1 + 0.32·d²)` falloff. A *cone mask* lets full light out only below the shade's rim, with ~22% leaking through the fabric. A real `THREE.PointLight` exists only to render **shadows**: the shaders include three's shadow chunks and call `getShadowMask()`. The lamp mesh itself doesn't cast shadows, because its shade surrounds the light.
+- **Window light**: cool starlight from `uMoonDir` (upper right). `windowLight()` traces each point towards the light and masks it by the window opening, so the window casts a soft, slanted light patch onto the sill and the cat. The penumbra widens with distance.
+- **Bounce**: a wide, soft warm term from the lamp, standing in for light scattered off the sill and walls.
+- **Ambient**: two-tone hemisphere, warm from below. It turns cool blue when the lamp is off.
+- **Contact shadows** (`roomAO`, plaster and wood only): darkens the creases where the sill meets the walls and ceiling, plus sphere occluders under the mug, the lamp base and along the cat's body. If you move those objects in Blender, update `OCC` in `glsl.ts`.
+- **Lamp toggle**: `uLamp` eases between 0 and 1. The shade, bulb, steam colour, dust and star brightness all follow it.
+
+### Per-object tricks
+
+- **Lamp shade vs stand**: on load, each vertex gets an `aShade` attribute (1 = dome). This is decided by height and distance from the pole. The shade glows from inside like paper, brightest at the open rim.
+- **Cat**: near-black albedo. What makes it read is the **rim light**: warm on the lamp side, cool on the window side. Its vertex shader breathes (body region, z 1.1…3.5) and sways the hanging tail. **Fur** is 12 shells of the same geometry pushed out along the normal and cut into strands with 3D noise sampled at the *un-pushed* position, so strands line up across shells.
+- **Ivy**: double-sided, backlit by the sky, with world-space wind sway that grows towards the lower leaves. glTF UVs need `texture.flipY = false`.
+- **Mug**: the inner wall darkens towards the coffee level, and the coffee is a disc with a slow swirl and a sharp lamp highlight.
+
+## Outside the window (`outside.ts`)
+
+Two procedural planes give real parallax when the camera drifts:
+
+- **Sky** (x = −28): dusk gradient, a Milky Way band, a spiral galaxy, three star layers (anti-aliased with `fwidth`, twinkling), and a shooting star every ~9 s.
+- **Landscape** (x = −12): fbm mountains, hills with twinkling town lights and a warm haze, a tiered pine tree line, and a lake that mirrors the town lights through ripples. `uShore` sets the waterline.
+
+Coordinates inside these shaders are `vP = (−z, y)` in world units, so "x" reads left-to-right on screen.
+
+Stars use a steep magnitude curve (most are faint pinpricks; only the brightest get a halo and a four-point flare). The town is clustered in noise patches that thin towards the hilltop, and the pines open into clearings around it.
+
+> **NaN warning.** With bloom on, a single NaN pixel gets blurred across the whole frame, which renders as a fully **black** scene. GLSL's `pow(x, y)` is undefined for `x < 0`, and dividing by `fwidth()` can hit zero, so clamp bases and guard divisors. `isnan()` is unreliable on Metal/ANGLE. To find the culprit, hide meshes one at a time.
+
+## Camera (`fitCamera`)
+
+**Wide screens (aspect ≥ 1.6)** use a long lens from far away (`CAMERA.distance` = 22). That flattens perspective so the alcove's side walls shrink to thin slivers. The field of view is derived from the aspect ratio, so `coverHalfWidth` (half the alcove's width at x = 0) exactly fills the screen. The camera then slides vertically until `CAMERA.floor` (the sill's front edge) sits on the bottom of the frame. Because the composition is bottom-anchored, the collapsing banner (which clips from the top) keeps the sill, cat, mug and lamp in view.
+
+**Narrow screens** (phones) back away until `SCENE.frameNarrow` (cat, mug, window) fits.
+
+Pointer parallax and a slow idle drift move the camera slightly. `prefers-reduced-motion` turns both off and slows everything.
+
+To reframe: `coverHalfWidth` (bigger shows more side wall and more height), `direction` (more y looks down onto the sill), `floor` and `distance`. The sky is composed for this camera, so if you change the eye height a lot, recheck the galaxy position in `outside.ts`; the window only shows a slice of the far sky plane.
+
+## Post-processing (`post.ts`)
+
+`RenderPass` → `UnrealBloomPass` (threshold 1.0, so only HDR highlights bloom: bulb, shade rim, stars, town) → `OutputPass` (Neutral tone mapping + sRGB) → film pass (lifted warm shadows, vignette, animated grain). MSAA ×4 on the HDR target.
+
+## Performance
+
+- Rendering stops when the hero scrolls out of view or the tab is hidden (`IntersectionObserver` + `visibilitychange`).
+- Pixel ratio is capped at 1.75. Shaders are compiled with `compileAsync` before the scene fades in.
+- One cube shadow map, 1024².
+- The heaviest geometry is the ivy (≈ 9.4k triangles per branch).
+
+## Updating the model from Blender
+
+1. Keep the object names in the table above, or update `byName` in `Experience.ts`.
+2. Export **glTF Binary (.glb)**, +Y up (default). Materials aren't needed. UVs are needed only for textured objects (the ivy).
+3. Replace `public/models/windowsill_scene.glb`.
+4. If you moved the lamp, mug or cat, update `SCENE` in `Experience.ts` (bulb position, mug centre, cat head for the purr bubble). The shader masks for the tail and breathing use world positions; see `CAT_DEFORM` in `materials.ts`.
+5. To check bounds quickly, a Node script with `GLTFLoader.parse` works (that's how the table above was produced).
+
+## Ideas that fit the current structure
+
+- **Posters on the wall**: framed textures of your favourite films hung beside the alcove, read from the library.
+- **Time-of-day**: drive the sky palette, `uLamp` and moon colour from the local clock (dusk, night, dawn).
+- **Rain on the glass**: a screen-space droplet shader on a pane in the window opening.
+- **Ambient audio**: a lo-fi / vinyl crackle toggle next to the lamp button (would need a royalty-free track).
