@@ -1,5 +1,5 @@
 'use client';
-import type { Movie, MoviePatch, TmdbSearchResult } from './types';
+import type { Movie, MovieDraft, MoviePatch, TmdbDetails, TmdbSearchResult, TmdbStatus } from './types';
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -10,7 +10,7 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 export const api = {
-  create: (body: Partial<Movie> & { tmdbId?: number }) =>
+  create: (body: MovieDraft) =>
     fetch('/api/movies', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(json<Movie>),
   update: (id: string, patch: MoviePatch) =>
     fetch(`/api/movies/${id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch) }).then(json<Movie>),
@@ -22,6 +22,13 @@ export const api = {
     form.set('file', file);
     return fetch(`/api/movies/${id}/poster`, { method: 'POST', body: form }).then(json<Movie>);
   },
+  tmdbMovie: (tmdbId: number) => fetch(`/api/tmdb/movie/${tmdbId}`).then(json<TmdbDetails>),
+  tmdbStatus: () => fetch('/api/settings/tmdb').then(json<TmdbStatus>),
+  saveTmdbKey: (key: string) =>
+    fetch('/api/settings/tmdb', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key }) }).then(
+      json<TmdbStatus>,
+    ),
+  removeTmdbKey: () => fetch('/api/settings/tmdb', { method: 'DELETE' }).then(json<TmdbStatus>),
   searchTmdb: (q: string, signal?: AbortSignal) =>
     fetch(`/api/tmdb/search?q=${encodeURIComponent(q)}`, { signal }).then(
       json<{ enabled: boolean; results: TmdbSearchResult[]; error?: string }>,

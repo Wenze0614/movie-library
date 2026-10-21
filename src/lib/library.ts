@@ -1,11 +1,31 @@
 import 'server-only';
 import { createMovie, downloadMedia, getMovie, removeMedia, updateMovie } from './store';
-import { tmdbDetails } from './tmdb';
+import { TMDB_IMAGE, tmdbDetails } from './tmdb';
 import type { Movie } from './types';
 
+/** Only TMDB's image CDN may be fetched from a client-supplied URL. */
+const isTmdbImage = (url: unknown): url is string => typeof url === 'string' && url.startsWith(`${TMDB_IMAGE}/`);
+
 /**
- * Pulls metadata + images from TMDB into a movie. Only "catalog" fields are
- * touched; your rating, review, notes, etc. are never overwritten.
+ * Creates a film from reviewed fields and downloads its poster and backdrop
+ * into data/, so the library keeps working offline.
+ */
+export async function createWithImages(
+  fields: Partial<Movie> & { title: string },
+  images: { posterUrl?: unknown; backdropUrl?: unknown },
+): Promise<Movie> {
+  const movie = await createMovie(fields);
+  const [poster, backdrop] = await Promise.all([
+    isTmdbImage(images.posterUrl) ? downloadMedia('posters', movie.id, images.posterUrl).catch(() => null) : null,
+    isTmdbImage(images.backdropUrl) ? downloadMedia('backdrops', movie.id, images.backdropUrl).catch(() => null) : null,
+  ]);
+  if (!poster && !backdrop) return movie;
+  return (await updateMovie(movie.id, { poster, backdrop })) ?? movie;
+}
+
+/**
+ * Pulls metadata + images from TMDB into an existing film. Only "catalog"
+ * fields are touched; your rating, review, notes, etc. are never overwritten.
  */
 export async function applyTmdb(movieId: string, tmdbId: number): Promise<Movie | null> {
   const movie = await getMovie(movieId);
@@ -22,10 +42,4 @@ export async function applyTmdb(movieId: string, tmdbId: number): Promise<Movie 
     poster: poster ?? movie.poster,
     backdrop: backdrop ?? movie.backdrop,
   });
-}
-
-export async function createFromTmdb(tmdbId: number, extra: Partial<Movie>): Promise<Movie> {
-  const { fields } = await tmdbDetails(tmdbId);
-  const movie = await createMovie({ ...fields, ...extra, title: fields.title });
-  return (await applyTmdb(movie.id, tmdbId)) ?? movie;
 }

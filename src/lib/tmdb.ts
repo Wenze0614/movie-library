@@ -1,20 +1,39 @@
 import 'server-only';
+import { readSettings } from './settings';
 import type { Movie, TmdbSearchResult } from './types';
 
 /**
- * Optional TMDB integration. Only used when TMDB_API_KEY is set in .env.local.
+ * Optional TMDB integration. The key comes from the key button in the header
+ * (saved to data/settings.json), falling back to TMDB_API_KEY in .env.local.
  * Accepts either a v3 API key (sent as ?api_key=) or a v4 read token (sent as Bearer).
  */
 const API = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE = 'https://image.tmdb.org/t/p';
 
-export function tmdbEnabled() {
-  return Boolean(process.env.TMDB_API_KEY?.trim());
+export async function tmdbKey(): Promise<{ key: string; source: 'settings' | 'env' } | null> {
+  const saved = (await readSettings()).tmdbApiKey?.trim();
+  if (saved) return { key: saved, source: 'settings' };
+  const env = process.env.TMDB_API_KEY?.trim();
+  return env ? { key: env, source: 'env' } : null;
 }
 
-async function tmdb<T>(pathname: string, params: Record<string, string> = {}): Promise<T> {
-  const key = process.env.TMDB_API_KEY?.trim();
-  if (!key) throw new Error('TMDB_API_KEY is not set. Add it to .env.local to enable search.');
+export async function tmdbEnabled() {
+  return Boolean(await tmdbKey());
+}
+
+/** Checks a pasted key with TMDB before it's saved. */
+export async function verifyTmdbKey(key: string): Promise<'ok' | 'rejected' | 'unreachable'> {
+  try {
+    await tmdb('/configuration', {}, key);
+    return 'ok';
+  } catch (err) {
+    return /TMDB \S+ failed: 40[13]/.test((err as Error).message) ? 'rejected' : 'unreachable';
+  }
+}
+
+async function tmdb<T>(pathname: string, params: Record<string, string> = {}, keyOverride?: string): Promise<T> {
+  const key = keyOverride ?? (await tmdbKey())?.key;
+  if (!key) throw new Error('No TMDB key yet. Add one with the key button in the top-right corner.');
   const url = new URL(API + pathname);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const isBearer = key.length > 40; // v4 tokens are long JWTs, v3 keys are 32 chars
@@ -76,7 +95,7 @@ export async function tmdbDetails(tmdbId: number) {
     directors: d.credits.crew.filter((c) => c.job === 'Director').map((c) => c.name),
     cast: d.credits.cast
       .sort((a, b) => a.order - b.order)
-      .slice(0, 10)
+      .slice(0, 8)
       .map((c) => ({ name: c.name, character: c.character || undefined })),
   };
   return {

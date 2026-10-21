@@ -72,10 +72,22 @@ To reframe: `coverHalfWidth` (bigger shows more side wall and more height), `dir
 
 ## Performance
 
-- Rendering stops when the hero scrolls out of view or the tab is hidden (`IntersectionObserver` + `visibilitychange`).
-- Pixel ratio is capped at 1.75. Shaders are compiled with `compileAsync` before the scene fades in.
-- One cube shadow map, 1024².
-- The heaviest geometry is the ivy (≈ 9.4k triangles per branch).
+The scene is ambient, so it's tuned to stay cool on a laptop. Settings are in `PERF` in `Experience.ts`.
+
+| What | Why |
+|---|---|
+| **30 fps idle, 60 fps while you interact** (pointer over the scene, lamp fading; 1.5 s hold) | The display may refresh at 120 Hz; slow ambient motion doesn't need it. This is the biggest saving. |
+| **Shadow map drawn once** (`shadowMap.autoUpdate = false`) | Nothing that casts a shadow moves. A point-light shadow is 6 extra scene renders per frame. |
+| **Bloom at half resolution** (`bloomScale`) | It's a soft glow; nobody can tell. |
+| **Pixel ratio capped at 1.5** | Retina at 2× costs ~78% more pixels for no visible gain under the film grain. |
+| **Sky and landscape drawn after the room** | The depth test then skips every sky pixel the walls hide. The landscape blends instead of using `discard`, which would defeat that. |
+| **Stops when the tab is hidden** | `visibilitychange` |
+
+Measured at Retina resolution on this project's machine: about 6.3 ms of GPU per frame at every refresh before, about 3.8 ms per frame at 30 fps after. Roughly 85% less GPU time while idle on a 120 Hz display.
+
+The Rive cat draws on its own small canvas. The runtime has no frame cap, but vector drawing at that size is cheap.
+
+To profile, time `render()` in a loop with a 1-pixel `gl.readPixels` after each frame. `gl.finish()` alone doesn't wait for the GPU in Chrome.
 
 ## Updating the model from Blender
 

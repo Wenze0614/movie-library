@@ -18,12 +18,13 @@ Open http://localhost:3000. On first run, a `data/` folder is created and filled
 ### Optional: automatic posters, story & cast
 
 1. Get a free API key at https://www.themoviedb.org/settings/api.
-2. `cp .env.example .env.local` and paste it into `TMDB_API_KEY=`.
-3. Restart `npm run dev`.
+2. Click the **key button** in the top-right corner and paste it. It's checked with TMDB, then saved to `data/settings.json` on your computer only. The dot on the key turns green once you're connected.
 
-**Add film** (or ⌘K) then searches TMDB. Picking a result fills in the poster, backdrop, story, cast, director, genres and runtime. Images are downloaded into `data/`, so everything keeps working offline. Films you added by hand can be linked later with **Fill in from TMDB** on their page.
+**Add film** (or ⌘K) then searches TMDB. Pick a result and you get a **review step** with the poster, title, year, director, genres, main cast and story filled in. Fix anything you like, choose Watched or To watch, then **Add to library**. Posters and backdrops are downloaded into `data/`, so everything keeps working offline. Films you added by hand can be linked later with **Fill in from TMDB** on their page.
 
-Without a key, you add films by title and year and can upload your own poster (click or drag onto the poster).
+Without a key, you type a title and fill in the same review form yourself. You can upload your own poster later (click or drag onto the poster).
+
+Prefer config files? `TMDB_API_KEY=` in `.env.local` works too; a key pasted with the key button takes priority.
 
 ## Where your data lives
 
@@ -32,6 +33,7 @@ data/
   movies/<id>.json    one file per film; readable, diff-able, easy to back up
   posters/            poster images
   backdrops/          backdrop images
+  settings.json       your TMDB key (if you added one with the key button)
 ```
 
 `data/` is git-ignored, so cloning the repo gives everyone their own empty cinema. To keep your library somewhere else (a synced folder, for example), set `CINEMA_DATA_DIR=/absolute/path` in `.env.local`.
@@ -40,7 +42,6 @@ data/
 
 - **Collection**: filter by All / Watched / To Watch / Favorites, search across title, director, cast and tags, sort, and switch between grid and list.
 - **Film page**: everything saves automatically as you type. Status, favorite, half-star rating, viewings (rewatches add a date), story, review, reflections, highlights (with an optional timestamp), notes, tags and cast.
-- **Diary**: every viewing in date order, grouped by month.
 - **The scene**: click the lamp to turn it off for a moonlit room; the cat falls asleep. Click the cat to pet it. The camera drifts gently with your pointer.
 
 ## Personalise

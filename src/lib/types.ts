@@ -64,3 +64,21 @@ export interface TmdbSearchResult {
   posterUrl: string | null;
   overview: string;
 }
+
+/** A film fetched from TMDB, shown for review before it's added. */
+export interface TmdbDetails {
+  fields: Partial<Movie> & { title: string };
+  posterUrl: string | null;
+  backdropUrl: string | null;
+}
+
+export interface TmdbStatus {
+  configured: boolean;
+  /** 'settings' = pasted with the key button, 'env' = TMDB_API_KEY in .env.local. */
+  source: 'settings' | 'env' | null;
+  /** Last 4 characters, e.g. "…a1b2". The full key never reaches the browser. */
+  hint: string | null;
+}
+
+/** What the add dialog sends to POST /api/movies. */
+export type MovieDraft = Partial<Movie> & { title: string; posterUrl?: string | null; backdropUrl?: string | null };

@@ -200,7 +200,8 @@ void main() {
     outCol = vec4(c, 1.0);
   }
 
-  if (outCol.a < 0.01) discard;
+  // Blended rather than discarded: discard would stop the GPU from skipping
+  // the parts of this plane hidden behind the walls.
   gl_FragColor = outCol;
   #include <colorspace_fragment>
 }`;
@@ -220,7 +221,8 @@ export function createOutside(shared: SharedUniforms, motion: { value: number })
   );
   sky.position.set(-28, 5, -0.3);
   sky.rotation.y = Math.PI / 2;
-  sky.renderOrder = -2;
+  // Drawn after the room, so the depth test skips every pixel the walls hide.
+  sky.renderOrder = 1;
 
   const land = new THREE.Mesh(
     new THREE.PlaneGeometry(36, 14),
@@ -228,6 +230,10 @@ export function createOutside(shared: SharedUniforms, motion: { value: number })
       uniforms: { uTime: shared.uTime, uMotion: motion, uShore: { value: 0.75 } },
       vertexShader: PLANE_VERTEX,
       fragmentShader: LAND_FRAGMENT,
+      // Transparent where there's sky, so it renders after the room and the
+      // sky; first among transparent things, so steam and dust stay in front.
+      transparent: true,
+      depthWrite: false,
     }),
   );
   land.position.set(-12, 2.5, -0.3);

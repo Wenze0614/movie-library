@@ -9,7 +9,7 @@
 | 2D cat | Rive (`@rive-app/canvas`), authored as text with the Rive CLI | Hand-drawn style, a tail that can hang out of the scene, a state machine for lamp and petting. See [rive-cat.md](rive-cat.md). |
 | Storage | JSON files on disk | Local-first, readable, diff-able, trivially backed up. Fine up to many thousands of films. |
 | Styling | Plain CSS with custom properties | One stylesheet (`src/app/globals.css`), no build plugins. |
-| Metadata | TMDB (optional) | Free API; only used when `TMDB_API_KEY` is set. |
+| Metadata | TMDB (optional) | Free API. The key is pasted with the header's key button (`data/settings.json`), or set as `TMDB_API_KEY` in `.env.local`. |
 
 Runtime dependencies: `next`, `react`, `react-dom`, `three`, `@rive-app/canvas`, `server-only`. Nothing else.
 
@@ -30,21 +30,22 @@ src/
     layout.tsx                    fonts, hero (3D scene + header), paper sheet, footer
     page.tsx                      collection
     movie/[id]/page.tsx           film page
-    diary/page.tsx                viewings by month
     api/...                       local JSON API (see below)
     globals.css                   all styles
   components/
     HeroScene.tsx                 mounts three.js, hover hints, purr bubbles, lamp button
     useRiveCat.ts                 the 2D cat: loads the .riv, follows the scene, drives lamp/pet inputs
-    SiteHeader.tsx                brand + nav; sets html[data-page] to resize the hero
+    SiteHeader.tsx                brand + Add film + key button; sets html[data-page] to resize the hero
     Collection.tsx                filters, search, sort, grid/list
     MovieDetail.tsx               inline-editable film page with autosave
-    AddFilmDialog.tsx             add by TMDB search or by hand; also "link to TMDB"
+    AddFilmDialog.tsx             find a film (TMDB search or by hand) → review its details → add; also "link to TMDB"
+    ApiKeyDialog.tsx              key button + dialog: paste, verify and save the TMDB key
     Poster.tsx, Stars.tsx
   lib/
     types.ts                      the Movie model
     store.ts                      file storage (server only)
-    tmdb.ts, library.ts           TMDB fetch + "apply TMDB data to a film" (server only)
+    tmdb.ts, library.ts           TMDB fetch, key lookup/verification, create-with-images (server only)
+    settings.ts                   data/settings.json (the TMDB key) (server only)
     api.ts                        typed fetch helpers for the browser
     media.ts                      image URLs and date helpers (shared)
   three/
@@ -67,7 +68,7 @@ The hero is `position: fixed`. It starts tall (`--hero-full`, ~68vh) and collaps
 - `useCollapsingHero` (in `HeroScene.tsx`) writes `--hero-vis` (the current visible height) and `--hero-progress` (0 → 1) on `<html>` on each scroll frame.
 - The canvas keeps its full height and is anchored to the bottom of the visible band. Collapsing only clips the top with `overflow: hidden`, so **the WebGL canvas never resizes while scrolling**.
 - `.hero-lip` is the paper's rounded top edge, drawn as part of the hero. While attached it lines up exactly with the sheet. Once collapsed, content slides under it and fades out.
-- Film and diary pages set `html[data-page="inner"]`, which makes `--hero-full` equal the banner, so they start collapsed.
+- Film pages set `html[data-page="inner"]`, which makes `--hero-full` equal the banner, so they start collapsed.
 - The brand scales down and the tagline fades with `--hero-progress`. `scroll-padding-top` keeps focused fields clear of the banner.
 
 To change the sizes, edit `--hero-full` / `--hero-banner` in `globals.css` (with separate values for phones in the 640px media query).
@@ -104,12 +105,14 @@ Missing fields are filled with defaults when a file is read (`normalize` in `sto
 | Method | Route | Purpose |
 | --- | --- | --- |
 | GET | `/api/movies` | list all films |
-| POST | `/api/movies` | create: `{ title, year?, status, watchDates?, rating? }` or `{ tmdbId, ... }` |
+| POST | `/api/movies` | create from the reviewed fields: `{ title, year, directors, genres, cast, overview, status, watchDates, rating, tmdbId?, posterUrl?, backdropUrl? }`. Poster and backdrop URLs (TMDB's image host only) are downloaded into `data/`. |
 | GET / PATCH / DELETE | `/api/movies/:id` | read / partial update / delete (also removes its images) |
 | POST | `/api/movies/:id/tmdb` | `{ tmdbId }`: fill catalog fields and images from TMDB. Your own writing is never touched. |
 | POST / DELETE | `/api/movies/:id/poster` | upload (`multipart`, field `file`, ≤ 15 MB) or remove your own poster |
 | GET | `/api/media/:kind/:file` | serve images from `data/posters` or `data/backdrops` |
 | GET | `/api/tmdb/search?q=` | `{ enabled, results }`. `enabled: false` when no key is set. |
+| GET | `/api/tmdb/movie/:tmdbId` | full details for the review step: `{ fields, posterUrl, backdropUrl }` |
+| GET / PUT / DELETE | `/api/settings/tmdb` | key status `{ configured, source, hint }` / save `{ key }` (verified with TMDB first) / remove. The full key is never sent back to the browser. |
 
 Pages read from disk directly in server components (`await connection()` keeps them dynamic). Client components write through the API.
 

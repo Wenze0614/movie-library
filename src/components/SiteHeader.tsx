@@ -4,17 +4,12 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { site } from '@/config';
 import { AddFilmButton } from './AddFilmDialog';
-
-const NAV = [
-  { href: '/', label: 'Collection' },
-  { href: '/diary', label: 'Diary' },
-];
+import { KeyButton } from './ApiKeyDialog';
 
 export function SiteHeader() {
-  const pathname = usePathname();
-  const isHome = pathname === '/';
+  const isHome = usePathname() === '/';
 
-  // The hero is tall on the home page and shrinks to a window strip elsewhere.
+  // The hero is tall on the home page and starts as a banner elsewhere.
   useEffect(() => {
     document.documentElement.dataset.page = isHome ? 'home' : 'inner';
   }, [isHome]);
@@ -29,17 +24,10 @@ export function SiteHeader() {
           ))}
         </span>
       </Link>
-      <nav className="nav" aria-label="Main">
-        {NAV.map((item) => {
-          const active = item.href === '/' ? isHome : pathname.startsWith(item.href);
-          return (
-            <Link key={item.href} href={item.href} className="nav-link" aria-current={active ? 'page' : undefined}>
-              {item.label}
-            </Link>
-          );
-        })}
+      <div className="nav">
         <AddFilmButton />
-      </nav>
+        <KeyButton />
+      </div>
     </header>
   );
 }

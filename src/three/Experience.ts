@@ -70,6 +70,21 @@ const SCENE = {
   ],
 } as const;
 
+/**
+ * Rendering budget. The scene is slow and ambient, so it doesn't need the
+ * display's full refresh rate (120 Hz on many laptops), which mostly heats
+ * the GPU. It runs at idleFps, and briefly at activeFps while you interact.
+ */
+const PERF = {
+  idleFps: 30,
+  activeFps: 60,
+  /** How long after the last interaction to stay at activeFps (ms). */
+  activeHold: 1500,
+  maxPixelRatio: 1.5,
+  /** Bloom is a soft glow, so it's computed at a fraction of the resolution. */
+  bloomScale: 0.5,
+};
+
 const CAMERA = {
   /** Direction from the look-at target towards the camera (slightly above, looking down at the sill). */
   direction: new THREE.Vector3(1, 0.09, 0).normalize(),
@@ -111,6 +126,8 @@ export class Experience {
   private clock = new THREE.Timer();
   private visible = true;
   private running = false;
+  private lastFrame = -Infinity;
+  private activeUntil = 0;
   private disposed = false;
   private cleanups: (() => void)[] = [];
 
@@ -119,7 +136,7 @@ export class Experience {
     private events: ExperienceEvents = {},
   ) {
     this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, PERF.maxPixelRatio));
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.shadowMap.enabled = true;
@@ -222,6 +239,10 @@ export class Experience {
     // Compile every shader up front so the first visible frame doesn't hitch.
     await this.renderer.compileAsync(this.scene, this.camera);
     if (this.disposed) return;
+    // Nothing that casts a shadow ever moves (the lamp is fixed, and the cat's
+    // shadow uses its rest pose), so the 6-face shadow map is drawn once.
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
     this.events.onReady?.();
     this.updateRunning();
   }
@@ -394,6 +415,7 @@ export class Experience {
       const x = ((e.clientX - r.left) / r.width) * 2 - 1;
       const y = -((e.clientY - r.top) / r.height) * 2 + 1;
       this.pointer.set(x, y);
+      this.markActive();
       this.updateHover(x, y, e.clientX - r.left, e.clientY - r.top);
     };
     const onLeave = () => {
@@ -478,7 +500,13 @@ export class Experience {
     this.hovered = target;
   }
 
+  /** Run at the higher frame rate for a moment (pointer moved, lamp toggled, …). */
+  private markActive() {
+    this.activeUntil = performance.now() + PERF.activeHold;
+  }
+
   setLamp(on: boolean) {
+    this.markActive();
     this.lampTarget = on ? 1 : 0;
     this.events.onLampChange?.(on);
   }
@@ -491,6 +519,8 @@ export class Experience {
     this.renderer.setSize(w, h);
     this.post.composer.setPixelRatio(this.renderer.getPixelRatio());
     this.post.composer.setSize(w, h);
+    const pr = this.renderer.getPixelRatio();
+    this.post.bloom.setSize(w * pr * PERF.bloomScale, h * pr * PERF.bloomScale);
     this.fitCamera(w, h);
     if (this.dust) (this.dust.material as THREE.ShaderMaterial).uniforms.uPixelRatio.value = this.renderer.getPixelRatio();
     if (!this.running) this.render(0);
@@ -502,11 +532,17 @@ export class Experience {
     const shouldRun = this.visible && !document.hidden && !this.disposed;
     if (shouldRun === this.running) return;
     this.running = shouldRun;
+    this.lastFrame = -Infinity;
     this.clock.reset();
     this.renderer.setAnimationLoop(shouldRun ? (t) => this.tick(t) : null);
   }
 
   private tick(time: number) {
+    const fading = Math.abs(this.lampTarget - this.shared.uLamp.value) > 0.01;
+    const fps = time < this.activeUntil || fading ? PERF.activeFps : PERF.idleFps;
+    // Skip display refreshes until a frame is due (2 ms slack for timer jitter).
+    if (time - this.lastFrame < 1000 / fps - 2) return;
+    this.lastFrame = time;
     this.clock.update(time);
     const dt = Math.min(this.clock.getDelta(), 0.1);
     this.render(dt);

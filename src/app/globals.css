@@ -37,7 +37,7 @@
 
   color-scheme: light;
 }
-/* Film and diary pages start as a banner. */
+/* Film pages start as a banner. */
 html[data-page='inner'] {
   --hero-full: var(--hero-banner);
 }
@@ -307,41 +307,14 @@ code {
 .nav {
   display: flex;
   align-items: center;
-  gap: clamp(14px, 2.2vw, 28px);
+  gap: 6px;
   margin-top: 4px;
-  padding: 5px 5px 5px clamp(14px, 1.6vw, 22px);
+  padding: 5px;
   border-radius: 999px;
   background: rgba(20, 13, 11, 0.38);
   border: 1px solid rgba(246, 234, 216, 0.14);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-}
-.nav-link {
-  position: relative;
-  font-family: var(--font-display), serif;
-  font-size: 18px;
-  color: var(--cream);
-  opacity: 0.85;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
-  transition: opacity 0.2s, color 0.2s;
-}
-.nav-link:hover {
-  opacity: 1;
-}
-.nav-link[aria-current='page'] {
-  color: #f1a55f;
-  opacity: 1;
-}
-.nav-link[aria-current='page']::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -5px;
-  width: 4px;
-  height: 4px;
-  margin-left: -2px;
-  border-radius: 50%;
-  background: #f1a55f;
 }
 .nav-add {
   font-family: var(--font-mono), monospace;
@@ -358,6 +331,45 @@ code {
   background: var(--accent);
   border-color: var(--accent);
 }
+/* Key button: a small dot shows whether the movie database is connected. */
+.nav-key {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  border: 1px solid rgba(246, 234, 216, 0.25);
+  background: transparent;
+  color: var(--cream);
+  transition: background 0.2s, border-color 0.2s;
+}
+.nav-key:hover {
+  background: rgba(246, 234, 216, 0.12);
+  border-color: rgba(246, 234, 216, 0.5);
+}
+.nav-key svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav-key-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(246, 234, 216, 0.35);
+  box-shadow: 0 0 0 2px rgba(20, 13, 11, 0.6);
+}
+.nav-key.is-connected .nav-key-dot {
+  background: #9ad48a;
+}
 
 /* ------------------------------------------------------------------ paper sheet */
 .sheet {
@@ -372,6 +384,10 @@ code {
 .sheet > * {
   max-width: 1240px;
   margin-inline: auto;
+}
+/* On film pages the banner cat's tail hangs into the sheet; keep the back link clear of it. */
+html[data-page='inner'] .sheet {
+  padding-top: calc(clamp(32px, 5vw, 56px) + 28px);
 }
 
 /* ------------------------------------------------------------------ collection */
@@ -1048,6 +1064,129 @@ code {
 .dialog-foot {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+}
+.dialog-foot-split {
+  justify-content: space-between;
+}
+.dialog-narrow {
+  width: min(480px, calc(100vw - 32px));
+}
+.dialog-body {
+  overflow-y: auto;
+}
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font: inherit;
+}
+.hint a {
+  color: var(--accent-deep);
+}
+.hint-small {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.key-input {
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+}
+.key-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.key-status em {
+  color: var(--ink-faint);
+}
+.key-status-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+.key-status.is-connected .key-status-dot {
+  background: #6bb35c;
+  box-shadow: 0 0 0 3px rgba(107, 179, 92, 0.2);
+}
+
+/* Review step: poster on the left, editable details on the right. */
+.review {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.review-poster {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.review-poster .poster {
+  aspect-ratio: 2 / 3;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+.review-poster figcaption {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.review-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+.field-row .field {
+  flex: 1;
+  min-width: 0;
+}
+.field-row .field-year {
+  flex: 0 0 76px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field > span {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+.field input,
+.field textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 7px 10px;
+  font-size: 15px;
+  resize: vertical;
+  outline: none;
+}
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--accent);
 }
 
 /* ------------------------------------------------------------------ movie detail */
@@ -1398,81 +1537,6 @@ code {
   font-size: 13px;
 }
 
-/* ------------------------------------------------------------------ diary */
-.diary-month {
-  margin-bottom: 36px;
-}
-.diary-month h2 {
-  font-size: 26px;
-  font-weight: 600;
-  font-style: italic;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-}
-.diary-month ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.diary-entry {
-  display: grid;
-  grid-template-columns: 44px 40px 1fr auto;
-  gap: 16px;
-  align-items: center;
-  padding: 10px 8px;
-  border-radius: 10px;
-  transition: background 0.2s;
-}
-.diary-entry:hover {
-  background: var(--card);
-}
-.diary-day {
-  font-family: var(--font-display), serif;
-  font-size: 30px;
-  text-align: right;
-  color: var(--accent-deep);
-}
-.diary-poster {
-  width: 40px;
-  height: 60px;
-  border-radius: 4px;
-}
-.diary-poster.poster-placeholder {
-  padding: 0;
-}
-.diary-poster .ph-title,
-.diary-poster .ph-year {
-  display: none;
-}
-.diary-main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-  min-width: 0;
-}
-.diary-main strong {
-  font-family: var(--font-display), serif;
-  font-size: 20px;
-  font-weight: 600;
-}
-.diary-main em {
-  font-family: var(--font-mono), monospace;
-  font-style: normal;
-  font-size: 12px;
-  color: var(--ink-soft);
-}
-.diary-main small {
-  flex-basis: 100%;
-  font-style: italic;
-  color: var(--ink-soft);
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ------------------------------------------------------------------ footer */
 .footer {
   position: relative;
@@ -1536,11 +1600,6 @@ code {
   }
   .nav {
     margin-top: 0;
-    gap: 10px;
-    padding-left: 12px;
-  }
-  .nav-link {
-    font-size: 14.5px;
   }
   .nav-add {
     width: 30px;
@@ -1565,6 +1624,12 @@ code {
   .info-editor {
     grid-template-columns: 1fr 1fr;
   }
+  .review {
+    grid-template-columns: 1fr;
+  }
+  .review-poster {
+    width: 120px;
+  }
   .info-editor label {
     grid-column: 1 / -1;
   }
@@ -1581,12 +1646,6 @@ code {
     width: 48px;
     height: 72px;
     grid-row: span 2;
-  }
-  .diary-entry {
-    grid-template-columns: 32px 36px 1fr;
-  }
-  .diary-entry .stars {
-    grid-column: 3;
   }
 }
 @media (prefers-reduced-motion: reduce) {

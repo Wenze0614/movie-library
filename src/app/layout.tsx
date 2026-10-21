@@ -26,14 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteHeader />
         </div>
         <main className="sheet">{children}</main>
-        <footer className="footer">
+        {/* <footer className="footer">
           <p>
             {site.footerQuote.map((line) => (
               <span key={line}>{line}</span>
             ))}
           </p>
           <hr />
-        </footer>
+        </footer> */}
       </body>
     </html>
   );

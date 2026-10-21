@@ -29,7 +29,7 @@ All are loaded with `next/font/google` and self-hosted at build time.
 
 ## Components & patterns
 
-- **Hero**: the 3D scene is about two-thirds of the screen when you land and collapses into a sticky banner of about a third as you scroll, so the windowsill stays visible. The title shrinks as it collapses. The nav sits in a frosted pill so it reads over the bright lamp; on phones the title and nav share one row and "Add film" becomes "+".
+- **Hero**: the 3D scene is about two-thirds of the screen when you land and collapses into a sticky banner of about a third as you scroll, so the windowsill stays visible. The title shrinks as it collapses. Top right is a frosted pill holding only **Add film** and the **key** button (a green dot means TMDB is connected); on phones "Add film" becomes "+".
 - **Sheet**: paper with a subtle SVG grain. Its rounded top edge is pinned to the bottom of the banner, and content slides under it with a soft fade.
 - **Cards**: 2:3 poster, title, year, stars (or a "To watch" tag), and a heart badge for favorites. They lift on hover and fade in with a stagger on load.
 - **Placeholder posters**: films without a poster get a generated night scene (a moon and hills, colours hashed from the title) so the grid never looks broken.
