@@ -35,6 +35,7 @@ src/
   components/
     HeroScene.tsx                 mounts three.js, hover hints, purr bubbles, lamp button
     useRiveCat.ts                 the 2D cat: loads the .riv, follows the scene, drives lamp/pet inputs
+    MusicButton.tsx               the CD button; creates the jazz engine on first click
     SiteHeader.tsx                brand + Add film + key button; sets html[data-page] to resize the hero
     Collection.tsx                filters, search, sort, grid/list
     MovieDetail.tsx               inline-editable film page with autosave
@@ -48,6 +49,8 @@ src/
     settings.ts                   data/settings.json (the TMDB key) (server only)
     api.ts                        typed fetch helpers for the browser
     media.ts                      image URLs and date helpers (shared)
+  audio/
+    LofiJazz.ts                   generative lo-fi jazz trio (Web Audio): see music.md
   three/
     Experience.ts                 renderer, camera, loading, interaction, loop
     materials.ts                  stylised ShaderMaterials for the room

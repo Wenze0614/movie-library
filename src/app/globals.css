@@ -236,11 +236,17 @@ code {
   height: var(--hero-full);
   pointer-events: none;
 }
-.lamp-toggle {
+/* Bottom-right scene controls: the CD (music) and the lamp. */
+.hero > .hero-controls {
   position: absolute;
   z-index: 3;
   right: var(--gutter);
   bottom: calc(var(--hero-fade) + var(--sheet-overlap) + 14px);
+  display: flex;
+  gap: 10px;
+}
+.lamp-toggle,
+.cd-toggle {
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -263,8 +269,33 @@ code {
   fill: #ffb066;
   stroke: #ffb066;
 }
-.lamp-toggle:hover {
+.lamp-toggle:hover,
+.cd-toggle:hover {
   border-color: rgba(246, 234, 216, 0.7);
+}
+/* A tiny iridescent CD that spins while the music plays. */
+.cd {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #1a1210 0 2.2px, rgba(246, 234, 216, 0.85) 2.6px 3.6px, rgba(20, 13, 11, 0.35) 4px 6.5px, transparent 7px),
+    conic-gradient(from 20deg, #e9e3ef, #c7b6f5, #9fd8f0, #f6edc4, #f3bfd9, #d6cdf0, #e9e3ef);
+  box-shadow: 0 0 0 1px rgba(246, 234, 216, 0.35);
+  opacity: 0.8;
+  animation: cd-spin 2.4s linear infinite;
+  animation-play-state: paused;
+  transition: opacity 0.3s, box-shadow 0.3s;
+}
+.cd-toggle[aria-pressed='true'] .cd {
+  opacity: 1;
+  animation-play-state: running;
+  box-shadow: 0 0 0 1px rgba(246, 234, 216, 0.5), 0 0 12px rgba(255, 190, 120, 0.45);
+}
+@keyframes cd-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ------------------------------------------------------------------ header */
@@ -1649,6 +1680,9 @@ html[data-page='inner'] .sheet {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .cd {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {

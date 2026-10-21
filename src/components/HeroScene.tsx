@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Experience, HoverTarget } from '@/three/Experience';
 import { CAT_STYLE } from '@/three/catStyle';
+import { MusicButton } from './MusicButton';
 import { useRiveCat } from './useRiveCat';
 
 const PURRS = ['purr…', 'mrrp', 'zzz', 'prrr', '♥'];
-const HOVER_LABEL: Record<Exclude<HoverTarget, null>, string> = { lamp: 'toggle the lamp', cat: 'pet the cat' };
+const HOVER_LABEL: Record<Exclude<HoverTarget, null>, string> = { lamp: 'toggle the lamp', cat: 'pet' };
 
 /**
  * Collapses the hero from --hero-full to --hero-banner as the page scrolls by
@@ -112,19 +113,22 @@ export function HeroScene() {
         </div>
       )}
       <div ref={probeRef} className="hero-probe" aria-hidden="true" />
-      <button
-        type="button"
-        className="lamp-toggle"
-        onClick={() => exp.current?.setLamp(!lampOn)}
-        aria-pressed={lampOn}
-        title={lampOn ? 'Turn the lamp off' : 'Turn the lamp on'}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 11 Q6 4 12 4 Q18 4 18 11 Z" />
-          <path d="M12 11 V19 M8 20 H16" />
-        </svg>
-        <span className="sr-only">{lampOn ? 'Turn the lamp off' : 'Turn the lamp on'}</span>
-      </button>
+      <div className="hero-controls">
+        <MusicButton />
+        <button
+          type="button"
+          className="lamp-toggle"
+          onClick={() => exp.current?.setLamp(!lampOn)}
+          aria-pressed={lampOn}
+          title={lampOn ? 'Turn the lamp off' : 'Turn the lamp on'}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 11 Q6 4 12 4 Q18 4 18 11 Z" />
+            <path d="M12 11 V19 M8 20 H16" />
+          </svg>
+          <span className="sr-only">{lampOn ? 'Turn the lamp off' : 'Turn the lamp on'}</span>
+        </button>
+      </div>
     </>
   );
 }
