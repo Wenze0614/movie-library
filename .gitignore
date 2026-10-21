@@ -19,3 +19,5 @@ next-env.d.ts
 # rive build output (the shipped copy is public/rive/cat.riv)
 /art/rive-cat/build/
 /public/rive/rive.wasm
+
+/sharing

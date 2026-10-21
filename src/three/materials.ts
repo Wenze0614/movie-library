@@ -13,8 +13,10 @@ export function createSharedUniforms() {
     uLamp: { value: 1 },
     /** 0 = night, 1 = day: the room's light follows the view outside. */
     uDay: { value: 0 },
-    /** The outside world's turn: 0 = night facing the window, π = day. */
-    uWheel: { value: 0 },
+    /** The day/night swap: 0 = the front world at rest, 1 = it has swung away (animated). */
+    uSwing: { value: 0 },
+    /** Which world is in front: 0 = night, 1 = day. */
+    uFront: { value: 0 },
     /** 0 = clear, 1 = raining (animated). */
     uRain: { value: 0 },
     uMoonDir: { value: new THREE.Vector3(-1, 0.72, -0.32).normalize() },

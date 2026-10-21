@@ -8,12 +8,12 @@ import type { SharedUniforms } from './materials';
  * camera drifts with the pointer.
  *
  * There are two worlds: night (stars, galaxy, a town by a lake, pines) and
- * day (blue sky, clouds, birds, snowy mountains, wooded hills, a meadow full
- * of flowers). They are two halves of one disc that turns around the horizon
- * at the middle of the window: `uWheel` = 0 shows night, π shows day, and in
- * between the horizon spins half a turn with night on one side and day on the
- * other. Each plane gets its own pivot (`uPivot`), lined up along the
- * camera's line of sight so the two depths turn together.
+ * day (blue sky, a few clouds, snowy mountains, wooded hills, a meadow full
+ * of flowers). They swap like two cards stacked in the window: the one in
+ * front (`uFront`) is pinned at the window's bottom-left corner and swings a
+ * quarter turn anticlockwise away (`uSwing` 0 → 1), revealing the other, which stays still
+ * behind it. Each plane gets its own pivot (`uPivot`), on the camera's line of
+ * sight through that corner, so the two depths swing together.
  */
 
 /**
@@ -40,21 +40,23 @@ vec3 rainyLand(vec3 c, float height) {
 }
 `;
 
-/** Shared by both planes: the world wheel. */
-const WHEEL = /* glsl */ `
-uniform float uWheel;
+/** Shared by both planes: the day/night card swing. */
+const SWING = /* glsl */ `
+uniform float uSwing;
+uniform float uFront;
 uniform vec2 uPivot;
-#define PIVOT uPivot
-const float PI_ = 3.14159265;
 mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
-// Where this pixel looks in the night world / the day world, and how much day it shows.
-vec2 wheelOffset(vec2 p) { return rot(-uWheel) * (p - PIVOT); }
-vec2 nightCoord(vec2 q) { return PIVOT + q; }
-vec2 dayCoord(vec2 q) { return PIVOT - q; } // mounted upside-down on the far side
-float dayAmount(vec2 q) { return smoothstep(0.5, -0.5, q.y); }
-// Uniform for every pixel, so derivatives (fwidth) stay valid inside the branches.
-bool showNight() { return uWheel < PI_ - 0.001; }
-bool showDay() { return uWheel > 0.001; }
+// Where this pixel falls on the front card, in the card's own (unswung)
+// coordinates. The card turns anticlockwise around the pivot, so a quarter
+// turn lifts it entirely off to the left of the window.
+vec2 cardCoord(vec2 p) { return uPivot + rot(uSwing * 1.5707963) * (p - uPivot); }
+// Signed distance from the card's swinging (bottom) edge: positive on the card.
+float cardEdge(vec2 u) { return u.y - uPivot.y; }
+// The back world, darkened by the card's soft shadow near its edge.
+float cardShadow(float edge, float px) {
+  return 1.0 - 0.4 * exp(edge / (px * 40.0)) * smoothstep(1.0, 0.75, uSwing);
+}
+const vec3 CARD_RIM = vec3(0.62, 0.45, 0.3); // the cardboard's cut edge (linear)
 `;
 
 const PLANE_VERTEX = /* glsl */ `
@@ -71,7 +73,7 @@ uniform float uLamp;
 uniform float uMotion;
 varying vec2 vP;
 ${NOISE}
-${WHEEL}
+${SWING}
 ${WEATHER}
 
 // One candidate star per cell. Magnitude follows a steep curve, so most stars
@@ -152,16 +154,6 @@ vec3 nightSky(vec2 p) {
   return col;
 }
 
-// A small gull-wing "v": distance from p to a bird centred at 0, wings flapping.
-float bird(vec2 p, float flap) {
-  float x = abs(p.x);
-  if (x > 0.16) return 0.0;
-  float wing = x * mix(-0.15, 0.55, flap) - 2.2 * x * x;
-  float d = abs(p.y - wing);
-  float px = max(fwidth(p.y), 1e-4);
-  return smoothstep(0.016 + px, 0.006, d);
-}
-
 vec3 daySky(vec2 p) {
   float t = clamp((p.y + 1.0) / 9.0, 0.0, 1.0);
   // Pale at the horizon, deepening to a clear summer blue.
@@ -177,35 +169,31 @@ vec3 daySky(vec2 p) {
   vec2 cp = vec2(p.x * 0.17 + drift, p.y * 0.4);
   float shape = fbm(cp + 2.0) + 0.35 * fbm(cp * 2.3 + 7.0) - 0.18;
   float band = smoothstep(0.6, 1.9, p.y) * smoothstep(8.5, 5.0, p.y);
-  float cloud = smoothstep(0.46, 0.6, shape * (0.78 + 0.42 * band));
+  float cloud = smoothstep(0.58, 0.7, shape * (0.78 + 0.36 * band));
   float above = fbm(cp + 2.0 + vec2(0.0, 0.12)) + 0.35 * fbm((cp + vec2(0.0, 0.12)) * 2.3 + 7.0) - 0.18;
   float lit = clamp(0.55 + (shape - above) * 5.0 + (p.y - 2.0) * 0.08, 0.0, 1.0);
   vec3 cloudCol = mix(srgb(vec3(0.7, 0.77, 0.87)), srgb(vec3(0.97, 0.97, 0.96)), lit);
   col = mix(col, cloudCol, cloud * 0.96);
 
-  // A small flock of birds crosses every ~14 seconds.
-  float period = 14.0;
-  float k = floor(uTime / period);
-  float age = (uTime - k * period) / period;
-  if (uMotion > 0.5 && age < 0.75) {
-    float dir = hash12(vec2(k, 4.0)) > 0.5 ? 1.0 : -1.0;
-    vec2 lead = vec2(dir * mix(-11.0, 11.0, age / 0.75), mix(2.6, 4.2, hash12(vec2(k, 5.0))) + age * 0.6);
-    for (int i = 0; i < 3; i++) {
-      float fi = float(i);
-      vec2 offset = vec2(-dir * fi * 0.42, -fi * 0.22 + (fi == 2.0 ? 0.4 : 0.0));
-      float flap = 0.5 + 0.5 * sin(uTime * 7.0 + fi * 1.7);
-      col = mix(col, srgb(vec3(0.22, 0.26, 0.33)), bird(p - lead - offset, flap));
-    }
-  }
   return col;
 }
 
 void main() {
-  vec2 q = wheelOffset(vP);
-  vec3 night = vec3(0.0), day = vec3(0.0);
-  if (showNight()) night = nightSky(nightCoord(q));
-  if (showDay()) day = daySky(dayCoord(q));
-  vec3 col = mix(night, day, showNight() && showDay() ? dayAmount(q) : (showDay() ? 1.0 : 0.0));
+  vec3 col;
+  // Both branches depend only on uniforms, so derivatives (fwidth) stay valid inside.
+  float px = max(fwidth(vP.x), 1e-4);
+  if (uSwing <= 0.0) {
+    col = uFront < 0.5 ? nightSky(vP) : daySky(vP);
+  } else {
+    vec2 u = cardCoord(vP);
+    vec3 night = nightSky(uFront < 0.5 ? u : vP);
+    vec3 day = daySky(uFront < 0.5 ? vP : u);
+    vec3 front = uFront < 0.5 ? night : day;
+    vec3 back = uFront < 0.5 ? day : night;
+    float edge = cardEdge(u);
+    front = mix(front, CARD_RIM, smoothstep(3.0 * px, 1.5 * px, edge));
+    col = mix(back * cardShadow(edge, px), front, smoothstep(-px, px, edge));
+  }
   // Full cover once it's raining properly: the galaxy is brighter than white, so a partial mix would still show it.
   if (uRain > 0.001) col = mix(col, overcast(vP), uRain);
   gl_FragColor = vec4(col, 1.0);
@@ -218,7 +206,7 @@ uniform float uMotion;
 uniform float uShore;
 varying vec2 vP;
 ${NOISE}
-${WHEEL}
+${SWING}
 ${WEATHER}
 
 float mountains(float x) {
@@ -348,6 +336,27 @@ vec4 dayTrees(vec2 p) {
   return outCol;
 }
 
+// One flower per grid cell (if it's picked), a round bloom swaying in the breeze.
+vec3 flowers(vec3 c, vec2 p, vec2 scale, float density, float seed) {
+  vec2 g = p * scale;
+  vec2 id = floor(g);
+  float px = max(fwidth(g.x), 1e-4); // before the branch: derivatives need every pixel
+  if (hash12(id + seed) >= density) return c;
+  vec2 sway = vec2(sin(uTime * 1.3 + id.x) * 0.06 * uMotion, 0.0);
+  vec2 f = fract(g) - 0.5 - (hash22(id + seed + 1.0) - 0.5) * 0.5 - sway;
+  float r = mix(0.12, 0.22, hash12(id + seed + 2.0));
+  float petal = smoothstep(r + px, r - px, length(f));
+  float centre = smoothstep(r * 0.4 + px, r * 0.4 - px, length(f));
+  float pick = hash12(id + seed + 3.0);
+  vec3 flower = pick < 0.3 ? srgb(vec3(1.0, 0.98, 0.94))
+    : pick < 0.55 ? srgb(vec3(1.0, 0.84, 0.3))
+    : pick < 0.75 ? srgb(vec3(1.0, 0.62, 0.76))
+    : pick < 0.9 ? srgb(vec3(0.98, 0.45, 0.4))
+    : srgb(vec3(0.76, 0.6, 1.0));
+  c = mix(c, flower, petal);
+  return mix(c, srgb(vec3(1.0, 0.82, 0.32)), centre * step(pick, 0.3));
+}
+
 vec4 dayLand(vec2 p) {
   vec4 outCol = vec4(0.0);
   vec3 haze = srgb(vec3(0.8, 0.89, 0.95));
@@ -379,6 +388,9 @@ vec4 dayLand(vec2 p) {
   if (p.y < hh) {
     vec3 c = mix(srgb(vec3(0.47, 0.68, 0.38)), srgb(vec3(0.33, 0.53, 0.3)), clamp((hh - p.y) / 0.9, 0.0, 1.0));
     c *= 0.95 + 0.1 * vnoise(p * vec2(2.0, 6.0));
+    // Drifts of tiny wildflowers across the slopes.
+    float drift = smoothstep(0.4, 0.75, vnoise(p * vec2(0.9, 2.2) + 5.0));
+    c = flowers(c, p + 1.3, vec2(26.0, 38.0), 0.35 * drift, 83.0);
     c = mix(c, haze, 0.12);
     outCol = vec4(c, 1.0);
   }
@@ -396,42 +408,44 @@ vec4 dayLand(vec2 p) {
     c *= 0.9 + 0.18 * blades;
     c = mix(c, srgb(vec3(0.72, 0.86, 0.5)), smoothstep(0.08, 0.0, depth) * 0.6); // sunlit rim
 
-    vec2 g = p * vec2(13.0, 20.0);
-    vec2 id = floor(g);
-    float px = max(fwidth(g.x), 1e-4);
-    float density = 0.1 + 0.3 * smoothstep(0.1, 1.6, depth);
-    if (hash12(id + 31.0) < density) {
-      vec2 sway = vec2(sin(uTime * 1.3 + id.x) * 0.06 * uMotion, 0.0);
-      vec2 f = fract(g) - 0.5 - (hash22(id + 32.0) - 0.5) * 0.5 - sway;
-      float r = mix(0.12, 0.22, hash12(id + 33.0));
-      float petal = smoothstep(r + px, r - px, length(f));
-      float centre = smoothstep(r * 0.4 + px, r * 0.4 - px, length(f));
-      float pick = hash12(id + 34.0);
-      vec3 flower = pick < 0.3 ? srgb(vec3(1.0, 0.98, 0.94))
-        : pick < 0.55 ? srgb(vec3(1.0, 0.84, 0.3))
-        : pick < 0.75 ? srgb(vec3(1.0, 0.62, 0.76))
-        : pick < 0.9 ? srgb(vec3(0.98, 0.45, 0.4))
-        : srgb(vec3(0.76, 0.6, 1.0));
-      c = mix(c, flower, petal);
-      c = mix(c, srgb(vec3(1.0, 0.82, 0.32)), centre * step(pick, 0.3));
-    }
+    // Three offset layers of blooms, so they crowd together without lining up:
+    // big ones up close, smaller and denser ones further back.
+    c = flowers(c, p + 0.71, vec2(8.0, 12.0), 0.12 + 0.3 * smoothstep(0.05, 0.8, depth), 19.0);
+    c = flowers(c, p, vec2(13.0, 20.0), 0.22 + 0.4 * smoothstep(0.05, 1.4, depth), 31.0);
+    c = flowers(c, p + 0.37, vec2(19.0, 28.0), 0.18 + 0.32 * smoothstep(0.0, 1.0, depth), 57.0);
     outCol = vec4(c, 1.0);
   }
   return outCol;
 }
 
 void main() {
-  vec2 q = wheelOffset(vP);
-  vec4 night = vec4(0.0), day = vec4(0.0);
-  if (showNight()) night = nightLand(nightCoord(q));
-  if (showDay()) day = dayLand(dayCoord(q));
-  // Blended rather than discarded: discard would stop the GPU from skipping
-  // the parts of this plane hidden behind the walls.
-  vec4 col = mix(night, day, showNight() && showDay() ? dayAmount(q) : (showDay() ? 1.0 : 0.0));
+  vec4 col;
+  float px = max(fwidth(vP.x), 1e-4);
+  if (uSwing <= 0.0) {
+    col = uFront < 0.5 ? nightLand(vP) : dayLand(vP);
+  } else {
+    vec2 u = cardCoord(vP);
+    vec4 night = nightLand(uFront < 0.5 ? u : vP);
+    vec4 day = dayLand(uFront < 0.5 ? vP : u);
+    vec4 front = uFront < 0.5 ? night : day;
+    vec4 back = uFront < 0.5 ? day : night;
+    float edge = cardEdge(u);
+    front = mix(front, vec4(CARD_RIM, 1.0), smoothstep(3.0 * px, 1.5 * px, edge));
+    back.rgb *= cardShadow(edge, px);
+    // Blended rather than discarded: discard would stop the GPU from skipping
+    // the parts of this plane hidden behind the walls.
+    col = mix(back, front, smoothstep(-px, px, edge));
+  }
   if (uRain > 0.001) col.rgb = rainyLand(col.rgb, vP.y - uShore);
   gl_FragColor = col;
   #include <colorspace_fragment>
 }`;
+
+/**
+ * The window opening's bottom-left corner (world space, on the glass), nudged
+ * a little further out so the card's corner never shows inside the frame.
+ */
+const SWING_CORNER = new THREE.Vector3(-2.1, 0.86 - 0.2, 3.82 + 0.2);
 
 export function createOutside(shared: SharedUniforms, motion: { value: number }) {
   const group = new THREE.Group();
@@ -440,15 +454,15 @@ export function createOutside(shared: SharedUniforms, motion: { value: number })
   const sky = new THREE.Mesh(
     new THREE.PlaneGeometry(70, 32),
     new THREE.ShaderMaterial({
-      // Pivot: the point on this far plane behind the landscape's pivot, as seen from the camera.
       uniforms: {
         uTime: shared.uTime,
         uLamp: shared.uLamp,
         uMotion: motion,
-        uWheel: shared.uWheel,
+        uSwing: shared.uSwing,
+        uFront: shared.uFront,
         uRain: shared.uRain,
         uDay: shared.uDay,
-        uPivot: { value: new THREE.Vector2(0.3, -0.1) },
+        uPivot: { value: new THREE.Vector2() },
       },
       vertexShader: PLANE_VERTEX,
       fragmentShader: SKY_FRAGMENT,
@@ -463,15 +477,15 @@ export function createOutside(shared: SharedUniforms, motion: { value: number })
   const land = new THREE.Mesh(
     new THREE.PlaneGeometry(36, 14),
     new THREE.ShaderMaterial({
-      // Pivot: the horizon at the middle of the window.
       uniforms: {
         uTime: shared.uTime,
         uMotion: motion,
         uShore: { value: 0.75 },
-        uWheel: shared.uWheel,
+        uSwing: shared.uSwing,
+        uFront: shared.uFront,
         uRain: shared.uRain,
         uDay: shared.uDay,
-        uPivot: { value: new THREE.Vector2(0.3, 1.2) },
+        uPivot: { value: new THREE.Vector2() },
       },
       vertexShader: PLANE_VERTEX,
       fragmentShader: LAND_FRAGMENT,
@@ -486,5 +500,19 @@ export function createOutside(shared: SharedUniforms, motion: { value: number })
   land.renderOrder = -1;
 
   group.add(sky, land);
-  return group;
+
+  /**
+   * Puts each plane's swing pivot where the camera's ray through the window's
+   * bottom-left corner meets it, so both depths swing around the same point
+   * on screen. Called every frame, since the camera drifts.
+   */
+  const aimSwing = (camera: THREE.Vector3) => {
+    for (const plane of [sky, land]) {
+      const t = (plane.position.x - camera.x) / (SWING_CORNER.x - camera.x);
+      const y = camera.y + (SWING_CORNER.y - camera.y) * t;
+      const z = camera.z + (SWING_CORNER.z - camera.z) * t;
+      (plane.material.uniforms.uPivot.value as THREE.Vector2).set(-z, y);
+    }
+  };
+  return { group, aimSwing };
 }

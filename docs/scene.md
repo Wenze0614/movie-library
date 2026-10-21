@@ -55,18 +55,19 @@ Each plane paints **two worlds**:
 | | Sky | Landscape |
 |---|---|---|
 | **Night** | dusk gradient, Milky Way, spiral galaxy, three star layers (anti-aliased with `fwidth`, twinkling), a shooting star every ~9 s | fbm mountains, hills with twinkling town lights and a warm haze, a tiered pine tree line, a lake mirroring the town lights. `uShore` sets the waterline. |
-| **Day** | pale-to-deep blue gradient, a sun (upper right, the side daylight enters the room from), drifting cumulus lit from above, a flock of three birds every ~14 s | snowy far peaks with a sun side and haze, a nearer blue-green range, rolling hills with round leafy trees, a foreground meadow of swaying grass and five colours of flowers |
+| **Day** | pale-to-deep blue gradient, a sun (upper right, the side daylight enters the room from), a few drifting cumulus lit from above (raise the threshold in `daySky` for fewer) | snowy far peaks with a sun side and haze, a nearer blue-green range, rolling hills with round leafy trees, drifts of tiny wildflowers on the hills, a foreground meadow of swaying grass with three layers of flowers in five colours (`flowers()`: bigger blooms up close) |
 
 Coordinates inside these shaders are `vP = (−z, y)` in world units, so "x" reads left-to-right on screen.
 
-### The day/night turn
+### The day/night swap
 
-The two worlds are halves of one disc that turns around the horizon at the middle of the window (`uPivot`, one per plane, lined up along the camera's line of sight so both depths turn together). Night is mounted upright and day upside-down on the far side, so turning `uWheel` from 0 to π spins the horizon half a circle: night swings away on one side of the turning edge while day swings in on the other. Each pixel rotates its own coordinate into whichever world it falls in (`WHEEL` snippet), so there are no gaps mid-turn.
+The two worlds are like two cards stacked in the window. The front one (`uFront`) is pinned at the window's bottom-left corner and swings a quarter turn anticlockwise (`uSwing` 0 → 1), lifting away off the left of the window and revealing the other world, which stays still behind it. The `SWING` snippet maps each pixel onto the swung card (`cardCoord`); pixels off the card show the back world. The card has a thin cardboard-coloured edge and casts a soft shadow on the world it reveals.
 
-- **Driven by:** `Experience.setDay(day)`. A 2.6 s ease-in-out moves `uWheel`, while `uDay` (0 → 1) moves the room light: the window light becomes warm sunshine and the ambient turns bright and cooler (`DAYLIGHT`). The ivy brightens too. The lamp stays your choice.
+- **Pivot:** each plane gets its own `uPivot`, where the camera's ray through the window corner (`SWING_CORNER`) meets that plane. It's re-aimed every frame (`aimSwing`), so the sky and the landscape swing around the same point on screen even while the camera drifts.
+- **Driven by:** `Experience.setDay(day)`. A 1.1 s ease-in-out moves the swing, while `uDay` (0 → 1) moves the room light: the window light becomes warm sunshine and the ambient turns bright and cooler (`DAYLIGHT`). The ivy brightens too. The lamp stays your choice. The front card changes only at rest, so clicking again mid-swing swings the same card back.
 - **Saved:** the choice goes to `localStorage` (`cinema.day`) and is restored without the animation.
-- **Cost:** only one world is computed at rest. Both are computed only mid-turn, and that choice comes from the uniform angle, so `fwidth` stays valid.
-- **The button** is a porthole onto a tiny wheel holding a moon and an upside-down sun. It turns 180° in the same 2.6 s.
+- **Cost:** only the front world is computed at rest. Both are computed only mid-swing, and that choice comes from a uniform, so `fwidth` stays valid.
+- **The button** is a porthole onto a tiny wheel holding a moon and an upside-down sun. It turns 180° in the same 1.1 s.
 
 ### Rain (`weather.ts`, plus the `WEATHER` snippet in `outside.ts`)
 
@@ -104,7 +105,7 @@ The scene is ambient, so it's tuned to stay cool on a laptop. Settings are in `P
 
 | What | Why |
 |---|---|
-| **30 fps idle, 60 fps while you interact** (pointer over the scene, lamp fading, day/night turning, rain fading; 1.5 s hold) | The display may refresh at 120 Hz; slow ambient motion doesn't need it. This is the biggest saving. |
+| **30 fps idle, 60 fps while you interact** (pointer over the scene, lamp fading, day/night swapping, rain fading; 1.5 s hold) | The display may refresh at 120 Hz; slow ambient motion doesn't need it. This is the biggest saving. |
 | **Shadow map drawn once** (`shadowMap.autoUpdate = false`) | Nothing that casts a shadow moves. A point-light shadow is 6 extra scene renders per frame. |
 | **Bloom at half resolution** (`bloomScale`) | It's a soft glow; nobody can tell. |
 | **Pixel ratio capped at 1.5** | Retina at 2× costs ~78% more pixels for no visible gain under the film grain. |

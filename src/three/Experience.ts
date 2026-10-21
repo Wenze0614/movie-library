@@ -78,8 +78,8 @@ const SCENE = {
  * display's full refresh rate (120 Hz on many laptops), which mostly heats
  * the GPU. It runs at idleFps, and briefly at activeFps while you interact.
  */
-/** How long the world takes to turn between night and day (seconds). */
-const DAY_TURN_SECONDS = 2.6;
+/** How long the front world takes to swing away and reveal the other (seconds). */
+const DAY_TURN_SECONDS = 1.1;
 
 /** Room light by day: bright, warm sun through the window and a cooler, brighter room. */
 const DAYLIGHT = {
@@ -134,8 +134,11 @@ export class Experience {
   private lampLight = new THREE.PointLight('#ffb066', 8, 0, 2);
   private lampTarget = 1;
   private dayTarget = 0;
-  /** Linear progress of the turn, 0 = night, 1 = day. */
+  /** Linear progress of the swap, 0 = night, 1 = day. */
   private dayProgress = 0;
+  /** The world on the front card (0 = night, 1 = day); it changes only at rest. */
+  private dayFront = 0;
+  private aimSwing?: (camera: THREE.Vector3) => void;
   private rainTarget = 0;
   private rainLevel = 0;
   private weather?: THREE.Group;
@@ -188,7 +191,9 @@ export class Experience {
     this.cleanups.push(() => reduced.removeEventListener('change', applyMotion));
 
     this.setupLights();
-    this.scene.add(createOutside(this.shared, this.motion));
+    const outside = createOutside(this.shared, this.motion);
+    this.scene.add(outside.group);
+    this.aimSwing = outside.aimSwing;
     this.weather = createWeather(this.shared, this.motion);
     this.scene.add(this.weather);
     this.listen();
@@ -541,7 +546,7 @@ export class Experience {
     this.activeUntil = performance.now() + PERF.activeHold;
   }
 
-  /** Turns the world to day or night; `instant` skips the animation (restoring a saved choice). */
+  /** Swaps the world to day or night; `instant` skips the animation (restoring a saved choice). */
   setDay(day: boolean, instant = false) {
     this.dayTarget = day ? 1 : 0;
     if (instant) this.dayProgress = this.dayTarget;
@@ -561,12 +566,16 @@ export class Experience {
     if (!this.running) this.render(0);
   }
 
-  /** Puts the world's turn, the rain and the room's light where the current progress says. */
+  /** Puts the day/night swap, the rain and the room's light where the current progress says. */
   private applyLight() {
     const e = easeInOutCubic(this.dayProgress);
     const r = this.rainLevel * this.rainLevel * (3 - 2 * this.rainLevel); // smoothstep
     const s = this.shared;
-    s.uWheel.value = e * Math.PI;
+    // At rest the world showing becomes the front card. Mid-swing it stays put,
+    // so changing your mind swings the same card back.
+    if (this.dayProgress === 0 || this.dayProgress === 1) this.dayFront = this.dayProgress;
+    s.uFront.value = this.dayFront;
+    s.uSwing.value = this.dayFront === 0 ? e : 1 - e;
     s.uDay.value = e;
     s.uRain.value = r;
     if (this.weather) this.weather.visible = r > 0.001;
@@ -636,6 +645,7 @@ export class Experience {
       this.applyLight();
     }
     this.updateCamera(dt);
+    this.aimSwing?.(this.camera.position);
     if (CAT_STYLE === '2d') this.updateCatRect();
     if (this.steam) this.steam.quaternion.copy(this.camera.quaternion);
     this.post.film.uniforms.uTime.value = this.shared.uTime.value;
