@@ -246,6 +246,8 @@ code {
   gap: 10px;
 }
 .lamp-toggle,
+.daynight-toggle,
+.rain-toggle,
 .cd-toggle {
   width: 34px;
   height: 34px;
@@ -270,8 +272,81 @@ code {
   stroke: #ffb066;
 }
 .lamp-toggle:hover,
+.daynight-toggle:hover,
+.rain-toggle:hover,
 .cd-toggle:hover {
   border-color: rgba(246, 234, 216, 0.7);
+}
+/* Rain: a little cloud; its drops fall while it's raining. */
+.rain-toggle svg {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+}
+.rain-toggle .cloud {
+  fill: rgba(246, 234, 216, 0.85);
+  transition: fill 0.4s;
+}
+.rain-toggle .drop {
+  stroke: #9cc4ff;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.rain-toggle[aria-pressed='true'] .cloud {
+  fill: #c7cfdb;
+}
+.rain-toggle[aria-pressed='true'] .drop {
+  animation: rain-drop 0.9s linear infinite;
+}
+.rain-toggle .d2 {
+  animation-delay: 0.3s !important;
+}
+.rain-toggle .d3 {
+  animation-delay: 0.6s !important;
+}
+@keyframes rain-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+/* Day/night: a porthole onto a tiny wheel that turns with the world outside. */
+.daynight-toggle {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.daynight-wheel {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: 34px;
+  height: 68px;
+  transform-origin: 50% 50%;
+  transition: transform 2.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.daynight-toggle[aria-pressed='true'] .daynight-wheel {
+  transform: rotate(180deg);
+}
+.daynight-wheel .moon {
+  fill: #e9e2ff;
+}
+.daynight-wheel .sun circle {
+  fill: #ffd27a;
+}
+.daynight-wheel .sun path {
+  stroke: #ffd27a;
+  stroke-width: 1.6;
+  stroke-linecap: round;
 }
 /* A tiny iridescent CD that spins while the music plays. */
 .cd {
@@ -1682,6 +1757,10 @@ html[data-page='inner'] .sheet {
 @media (prefers-reduced-motion: reduce) {
   .cd {
     animation: none !important;
+  }
+  .rain-toggle[aria-pressed='true'] .drop {
+    animation: none !important;
+    opacity: 1;
   }
   *,
   *::before,

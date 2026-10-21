@@ -11,6 +11,12 @@ export function createSharedUniforms() {
     uLampPos: { value: new THREE.Vector3(-0.9, 1.18, -3.84) },
     uLampColor: { value: new THREE.Color('#ffa556').multiplyScalar(4.8) },
     uLamp: { value: 1 },
+    /** 0 = night, 1 = day: the room's light follows the view outside. */
+    uDay: { value: 0 },
+    /** The outside world's turn: 0 = night facing the window, π = day. */
+    uWheel: { value: 0 },
+    /** 0 = clear, 1 = raining (animated). */
+    uRain: { value: 0 },
     uMoonDir: { value: new THREE.Vector3(-1, 0.72, -0.32).normalize() },
     uMoonColor: { value: new THREE.Color('#6b7fd6').multiplyScalar(0.5) },
     uAmbSky: { value: new THREE.Color('#3d2e2c').multiplyScalar(0.62) },
@@ -223,10 +229,10 @@ export function ivyMaterial(shared: SharedUniforms, map: THREE.Texture) {
     fragment: /* glsl */ `
       vec3 tex = texture2D(uMap, vUv).rgb;
       RoomLight l = roomLight(vWorldPos, N, V, 1.0, 0.6, 8.0);
-      // Light from the sky shining through the leaves.
+      // Light from the sky shining through the leaves: cool at night, sunny by day.
       float through = pow(clamp(dot(-V, uMoonDir) * 0.5 + 0.5, 0.0, 1.0), 3.0);
-      vec3 nightTint = srgb(vec3(0.38, 0.5, 0.62));
-      col = tex * (l.diffuse * 0.6 + nightTint * (0.14 + through * 0.35));
+      vec3 skyTint = mix(srgb(vec3(0.38, 0.5, 0.62)), srgb(vec3(1.0, 1.0, 0.86)), uDay);
+      col = tex * (l.diffuse * 0.6 + skyTint * (0.14 + through * 0.35 + uDay * 0.45));
       col += tex * srgb(vec3(0.5, 0.75, 0.35)) * fresnel(N, V, 3.0) * 0.25;
     `,
   });

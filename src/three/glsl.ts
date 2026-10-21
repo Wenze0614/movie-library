@@ -52,6 +52,7 @@ uniform float uTime;
 uniform vec3 uLampPos;
 uniform vec3 uLampColor;
 uniform float uLamp;          // 0 = off, 1 = on (animated)
+uniform float uDay;           // 0 = night, 1 = day (animated)
 uniform vec3 uMoonDir;        // direction *towards* the window light
 uniform vec3 uMoonColor;
 uniform vec3 uAmbSky;

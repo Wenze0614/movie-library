@@ -42,7 +42,7 @@ data/
 
 - **Collection**: filter by All / Watched / To Watch / Favorites, search across title, director, cast and tags, sort, and switch between grid and list.
 - **Film page**: everything saves automatically as you type. Status, favorite, half-star rating, viewings (rewatches add a date), story, review, reflections, highlights (with an optional timestamp), notes, tags and cast.
-- **The scene**: click the lamp to turn it off for a moonlit room; the cat falls asleep. Click the cat to pet it. The camera drifts gently with your pointer.
+- **The scene**: the sun/moon button turns the world outside between night (stars, galaxy, a lakeside town) and day (blue sky, clouds, snowy mountains, a flower meadow); the whole view spins half a turn around the horizon, and your choice is remembered. The cloud button makes it rain over either world: grey clouds roll in, rain falls outside, drops bead and run down the window glass, and a soft rain sound mixes in with the jazz. Click the lamp to turn it off for a moonlit room; the cat falls asleep. Click the cat to pet it. The camera drifts gently with your pointer.
 - **Music**: click the little CD next to the lamp for lo-fi jazz (the CD spins while it plays). It's composed live in your browser, so it's original, needs no audio files, and never repeats exactly. Click again to pause. Details: [docs/music.md](docs/music.md).
 
 ## Personalise

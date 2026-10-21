@@ -18,9 +18,9 @@ A slow (70 BPM), swung, happy combo in B♭:
 
 ## How it plays
 
-- The `AudioContext` is created on the first click (browsers require a gesture before sound).
+- The `AudioContext` is created on the first click (browsers require a gesture before sound). It's shared with the rain (`sceneAudio.ts`), so the two mix.
 - Notes are scheduled ~1.2 s ahead on a 150 ms timer, so a busy page never causes gaps. Tabs playing audio aren't throttled, so it keeps going in the background.
-- **Pause** fades out over 0.7 s, then suspends the audio engine, which then uses no CPU.
+- **Pause** fades out over 0.7 s. Once neither the jazz nor the rain is playing, the audio engine is suspended and uses no CPU.
 - Measured cost: 45 s of music renders offline in ~3 s, so live playback uses a small slice of one core.
 
 ## Tweaking
@@ -35,3 +35,13 @@ All at the top of `LofiJazz.ts`:
 - Mix levels: the `bus(...)` calls in the constructor (level, reverb send, low-pass) and `PLAY_LEVEL`.
 
 To hear changes without the site, `LofiJazz.renderClip(seconds)` renders to an `AudioBuffer` with an `OfflineAudioContext`.
+
+## Rain
+
+`RainSound.ts` synthesizes the rain from pink noise; there are no audio files:
+
+- **Hiss:** band-limited noise (450 Hz – 4.8 kHz) that swells in slow gusts (a 0.07 Hz LFO).
+- **Patter:** the same noise low-passed at 700 Hz, underneath.
+- **Taps:** about nine tiny band-passed clicks a second at random, panned across the stereo field, with an occasional fuller "plip" from a bigger drop.
+
+It fades in over 2.5 s and out over 2 s with the rain button. `LEVEL` sets the volume: it sits about 11 dB under the jazz (RMS, measured with `RainSound.renderClip` and `LofiJazz.renderClip`), so it stays in the background. Rain restored on page load starts its sound on the first click of any scene button, since browsers need a gesture first.

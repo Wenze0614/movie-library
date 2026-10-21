@@ -47,10 +47,38 @@ All room materials are `ShaderMaterial`s sharing one set of uniforms (`createSha
 
 Two procedural planes give real parallax when the camera drifts:
 
-- **Sky** (x = −28): dusk gradient, a Milky Way band, a spiral galaxy, three star layers (anti-aliased with `fwidth`, twinkling), and a shooting star every ~9 s.
-- **Landscape** (x = −12): fbm mountains, hills with twinkling town lights and a warm haze, a tiered pine tree line, and a lake that mirrors the town lights through ripples. `uShore` sets the waterline.
+- **Sky** (x = −28)
+- **Landscape** (x = −12), transparent wherever there's sky
+
+Each plane paints **two worlds**:
+
+| | Sky | Landscape |
+|---|---|---|
+| **Night** | dusk gradient, Milky Way, spiral galaxy, three star layers (anti-aliased with `fwidth`, twinkling), a shooting star every ~9 s | fbm mountains, hills with twinkling town lights and a warm haze, a tiered pine tree line, a lake mirroring the town lights. `uShore` sets the waterline. |
+| **Day** | pale-to-deep blue gradient, a sun (upper right, the side daylight enters the room from), drifting cumulus lit from above, a flock of three birds every ~14 s | snowy far peaks with a sun side and haze, a nearer blue-green range, rolling hills with round leafy trees, a foreground meadow of swaying grass and five colours of flowers |
 
 Coordinates inside these shaders are `vP = (−z, y)` in world units, so "x" reads left-to-right on screen.
+
+### The day/night turn
+
+The two worlds are halves of one disc that turns around the horizon at the middle of the window (`uPivot`, one per plane, lined up along the camera's line of sight so both depths turn together). Night is mounted upright and day upside-down on the far side, so turning `uWheel` from 0 to π spins the horizon half a circle: night swings away on one side of the turning edge while day swings in on the other. Each pixel rotates its own coordinate into whichever world it falls in (`WHEEL` snippet), so there are no gaps mid-turn.
+
+- **Driven by:** `Experience.setDay(day)`. A 2.6 s ease-in-out moves `uWheel`, while `uDay` (0 → 1) moves the room light: the window light becomes warm sunshine and the ambient turns bright and cooler (`DAYLIGHT`). The ivy brightens too. The lamp stays your choice.
+- **Saved:** the choice goes to `localStorage` (`cinema.day`) and is restored without the animation.
+- **Cost:** only one world is computed at rest. Both are computed only mid-turn, and that choice comes from the uniform angle, so `fwidth` stays valid.
+- **The button** is a porthole onto a tiny wheel holding a moon and an upside-down sun. It turns 180° in the same 2.6 s.
+
+### Rain (`weather.ts`, plus the `WEATHER` snippet in `outside.ts`)
+
+Rain is a layer on top of either world, driven by one uniform, `uRain` (0 → 1 over 2.5 s, from `Experience.setRain(rain)`):
+
+- **Grey clouds:** the sky shader mixes towards `overcast()`: layered fbm cloud, blue-grey by day and charcoal by night, with a faint warm glow from the town on the low clouds. At full rain it covers the sky completely, galaxy and sun included.
+- **Wet land:** `rainyLand()` desaturates and darkens the landscape and fades the far ranges into mist (`rainMist()`), so the mountains recede.
+- **Streaks outside:** a transparent plane between the window and the hills, with three layers of slanted streaks at different sizes and speeds for parallax.
+- **Drops on the glass:** a plane in the window opening. Each drop is shaded as a tiny lens (`lens()`): a clear middle, a darker rim and one small sharp highlight (warm from the lamp at night, white by day). Beads sit still on a jittered grid, one runner per column slides down with a wiggle and leaves a trail of tiny beads, and the bottom of the glass mists a little. It blends premultiplied, so drops can both darken and glint.
+- **Room light:** the window light dims to `RAIN_LIGHT.window` and the ambient to `RAIN_LIGHT.ambient`, tinted cool grey.
+- **Sound:** see [music.md](music.md#rain).
+- **Saved** to `localStorage` (`cinema.rain`), separately from day/night. The weather meshes are hidden while it's dry, so rain costs nothing when off.
 
 Stars use a steep magnitude curve (most are faint pinpricks; only the brightest get a halo and a four-point flare). The town is clustered in noise patches that thin towards the hilltop, and the pines open into clearings around it.
 
@@ -76,7 +104,7 @@ The scene is ambient, so it's tuned to stay cool on a laptop. Settings are in `P
 
 | What | Why |
 |---|---|
-| **30 fps idle, 60 fps while you interact** (pointer over the scene, lamp fading; 1.5 s hold) | The display may refresh at 120 Hz; slow ambient motion doesn't need it. This is the biggest saving. |
+| **30 fps idle, 60 fps while you interact** (pointer over the scene, lamp fading, day/night turning, rain fading; 1.5 s hold) | The display may refresh at 120 Hz; slow ambient motion doesn't need it. This is the biggest saving. |
 | **Shadow map drawn once** (`shadowMap.autoUpdate = false`) | Nothing that casts a shadow moves. A point-light shadow is 6 extra scene renders per frame. |
 | **Bloom at half resolution** (`bloomScale`) | It's a soft glow; nobody can tell. |
 | **Pixel ratio capped at 1.5** | Retina at 2× costs ~78% more pixels for no visible gain under the film grain. |
@@ -101,5 +129,4 @@ To profile, time `render()` in a loop with a 1-pixel `gl.readPixels` after each 
 
 - **Posters on the wall**: framed textures of your favourite films hung beside the alcove, read from the library.
 - **Time-of-day**: drive the sky palette, `uLamp` and moon colour from the local clock (dusk, night, dawn).
-- **Rain on the glass**: a screen-space droplet shader on a pane in the window opening.
-- **Ambient audio**: a lo-fi / vinyl crackle toggle next to the lamp button (would need a royalty-free track).
+- **Thunder**: a rare flash that lifts `uMoonColor` for a frame or two, with a low rumble in `RainSound`.

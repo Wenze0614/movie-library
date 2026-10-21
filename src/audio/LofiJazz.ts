@@ -220,7 +220,7 @@ export class LofiJazz {
     this.timer = setInterval(() => this.scheduleUntil(ctx.currentTime + 1.2), 150);
   }
 
-  /** Fades out, then suspends the audio engine so it costs no CPU. */
+  /** Fades out and stops scheduling (the shared engine decides when to sleep). */
   async pause() {
     const ctx = this.ctx as AudioContext;
     this.playing = false;
@@ -234,7 +234,6 @@ export class LofiJazz {
     if (!this.playing) {
       this.crackle?.stop();
       this.crackle = null;
-      await ctx.suspend();
     }
   }
 

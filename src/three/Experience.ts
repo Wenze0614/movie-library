@@ -13,6 +13,7 @@ import {
   woodMaterial,
 } from './materials';
 import { createOutside } from './outside';
+import { createWeather } from './weather';
 import { createDust, createSteam } from './effects';
 import { createComposer } from './post';
 import { CAT_STYLE } from './catStyle';
@@ -34,6 +35,8 @@ export interface ExperienceEvents {
   /** Screen position (CSS px, relative to the container) of the cat's head. */
   onPet?: (x: number, y: number) => void;
   onLampChange?: (on: boolean) => void;
+  onDayChange?: (day: boolean) => void;
+  onRainChange?: (rain: boolean) => void;
   /** Every frame in 2D cat mode: where to draw the Rive cat. */
   onCatFrame?: (rect: CatRect) => void;
 }
@@ -75,6 +78,26 @@ const SCENE = {
  * display's full refresh rate (120 Hz on many laptops), which mostly heats
  * the GPU. It runs at idleFps, and briefly at activeFps while you interact.
  */
+/** How long the world takes to turn between night and day (seconds). */
+const DAY_TURN_SECONDS = 2.6;
+
+/** Room light by day: bright, warm sun through the window and a cooler, brighter room. */
+const DAYLIGHT = {
+  window: new THREE.Color('#fff1da').multiplyScalar(0.95),
+  ambSky: new THREE.Color('#c9d5e2').multiplyScalar(0.5),
+  ambGround: new THREE.Color('#a3805f').multiplyScalar(0.45),
+};
+
+/** How long rain takes to roll in or clear (seconds). */
+const RAIN_FADE_SECONDS = 2.5;
+/** Rain dims and cools the light through the window and the room a little. */
+const RAIN_LIGHT = { window: 0.42, ambient: 0.82, tint: new THREE.Color('#c9d6ea') };
+
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+/** Moves `value` towards `target` by at most `step`. */
+const approach = (value: number, target: number, step: number) =>
+  target > value ? Math.min(target, value + step) : Math.max(target, value - step);
+
 const PERF = {
   idleFps: 30,
   activeFps: 60,
@@ -110,6 +133,17 @@ export class Experience {
   private motion = { value: 1 };
   private lampLight = new THREE.PointLight('#ffb066', 8, 0, 2);
   private lampTarget = 1;
+  private dayTarget = 0;
+  /** Linear progress of the turn, 0 = night, 1 = day. */
+  private dayProgress = 0;
+  private rainTarget = 0;
+  private rainLevel = 0;
+  private weather?: THREE.Group;
+  private nightLight = {
+    window: this.shared.uMoonColor.value.clone(),
+    ambSky: this.shared.uAmbSky.value.clone(),
+    ambGround: this.shared.uAmbGround.value.clone(),
+  };
 
   private target = new THREE.Vector3();
   private distance = 12;
@@ -155,6 +189,8 @@ export class Experience {
 
     this.setupLights();
     this.scene.add(createOutside(this.shared, this.motion));
+    this.weather = createWeather(this.shared, this.motion);
+    this.scene.add(this.weather);
     this.listen();
     this.resize();
     this.load();
@@ -505,6 +541,44 @@ export class Experience {
     this.activeUntil = performance.now() + PERF.activeHold;
   }
 
+  /** Turns the world to day or night; `instant` skips the animation (restoring a saved choice). */
+  setDay(day: boolean, instant = false) {
+    this.dayTarget = day ? 1 : 0;
+    if (instant) this.dayProgress = this.dayTarget;
+    this.markActive();
+    this.applyLight();
+    this.events.onDayChange?.(day);
+    if (!this.running) this.render(0);
+  }
+
+  /** Lets the rain roll in or clear; `instant` skips the fade (restoring a saved choice). */
+  setRain(rain: boolean, instant = false) {
+    this.rainTarget = rain ? 1 : 0;
+    if (instant) this.rainLevel = this.rainTarget;
+    this.markActive();
+    this.applyLight();
+    this.events.onRainChange?.(rain);
+    if (!this.running) this.render(0);
+  }
+
+  /** Puts the world's turn, the rain and the room's light where the current progress says. */
+  private applyLight() {
+    const e = easeInOutCubic(this.dayProgress);
+    const r = this.rainLevel * this.rainLevel * (3 - 2 * this.rainLevel); // smoothstep
+    const s = this.shared;
+    s.uWheel.value = e * Math.PI;
+    s.uDay.value = e;
+    s.uRain.value = r;
+    if (this.weather) this.weather.visible = r > 0.001;
+    s.uMoonColor.value
+      .lerpColors(this.nightLight.window, DAYLIGHT.window, e)
+      .multiply(new THREE.Color(1, 1, 1).lerp(RAIN_LIGHT.tint, r))
+      .multiplyScalar(1 - (1 - RAIN_LIGHT.window) * r);
+    const ambient = 1 - (1 - RAIN_LIGHT.ambient) * r;
+    s.uAmbSky.value.lerpColors(this.nightLight.ambSky, DAYLIGHT.ambSky, e).multiplyScalar(ambient);
+    s.uAmbGround.value.lerpColors(this.nightLight.ambGround, DAYLIGHT.ambGround, e).multiplyScalar(ambient);
+  }
+
   setLamp(on: boolean) {
     this.markActive();
     this.lampTarget = on ? 1 : 0;
@@ -538,7 +612,10 @@ export class Experience {
   }
 
   private tick(time: number) {
-    const fading = Math.abs(this.lampTarget - this.shared.uLamp.value) > 0.01;
+    const fading =
+      Math.abs(this.lampTarget - this.shared.uLamp.value) > 0.01 ||
+      this.dayProgress !== this.dayTarget ||
+      this.rainLevel !== this.rainTarget;
     const fps = time < this.activeUntil || fading ? PERF.activeFps : PERF.idleFps;
     // Skip display refreshes until a frame is due (2 ms slack for timer jitter).
     if (time - this.lastFrame < 1000 / fps - 2) return;
@@ -553,6 +630,11 @@ export class Experience {
     const lamp = this.shared.uLamp;
     lamp.value += (this.lampTarget - lamp.value) * (1 - Math.exp(-dt * 4));
     this.lampLight.intensity = 8 * lamp.value;
+    if (this.dayProgress !== this.dayTarget || this.rainLevel !== this.rainTarget) {
+      this.dayProgress = approach(this.dayProgress, this.dayTarget, dt / DAY_TURN_SECONDS);
+      this.rainLevel = approach(this.rainLevel, this.rainTarget, dt / RAIN_FADE_SECONDS);
+      this.applyLight();
+    }
     this.updateCamera(dt);
     if (CAT_STYLE === '2d') this.updateCatRect();
     if (this.steam) this.steam.quaternion.copy(this.camera.quaternion);
