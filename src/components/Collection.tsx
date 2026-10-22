@@ -126,15 +126,21 @@ export function Collection({
 
   return (
     <section className="collection">
-      {bgSrc && <div key={bgSrc} className="collection-bg" style={{ backgroundImage: `url(${bgSrc})` }} aria-hidden="true" />}
+      {bgSrc && (
+        <>
+          {/* A page-wide variable, so the paper's top edge in the hero can carry the same picture. */}
+          <style>{`:root { --collection-bg: url("${bgSrc.replace(/["\\<>]/g, '')}"); }`}</style>
+          <div key={bgSrc} className="collection-bg" aria-hidden="true" />
+        </>
+      )}
 
-      <div className="collection-head">
+      {/* <div className="collection-head">
         <h1 className="sr-only">{site.collectionTitle}</h1>
         <p className="kicker">{site.collectionSubtitle}</p>
         <p className="stats">
           {movies.length} films · {watched} watched · {movies.length - watched} to watch
         </p>
-      </div>
+      </div> */}
 
       <div className="toolbar">
         <div className="filters">
