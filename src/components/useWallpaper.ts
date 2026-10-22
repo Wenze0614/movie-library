@@ -17,7 +17,7 @@ export function useWallpaper(notify: (text: string, ms?: number) => void) {
     try {
       const { waiting } = await api.setWallpaper(movie.id);
       if (waiting) {
-        say(`Full screen has its own desktop on a Mac. Leave full screen and ${movie.title} becomes your wallpaper.`, 0);
+        say(`If you are on Mac, please EXIT full screen or return to desktop to apply the wallpaper switch`, 0);
         if ((await api.wallpaperSettled(movie.id)).status !== 'set') return;
       }
       say(`${movie.title} is now your wallpaper`);
