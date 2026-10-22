@@ -46,7 +46,8 @@ src/
     types.ts                      the Movie model
     store.ts                      file storage (server only)
     tmdb.ts, library.ts           TMDB fetch, key lookup/verification, create-with-images (server only)
-    settings.ts                   data/settings.json (the TMDB key) (server only)
+    settings.ts                   data/settings.json (TMDB key, collection background) (server only)
+    wallpaper.ts                  set a film as the desktop wallpaper: macOS / Windows / GNOME (server only)
     api.ts                        typed fetch helpers for the browser
     media.ts                      image URLs and date helpers (shared)
   audio/
@@ -115,6 +116,8 @@ Missing fields are filled with defaults when a file is read (`normalize` in `sto
 | GET | `/api/media/:kind/:file` | serve images from `data/posters` or `data/backdrops` |
 | GET | `/api/tmdb/search?q=` | `{ enabled, results }`. `enabled: false` when no key is set. |
 | GET | `/api/tmdb/movie/:tmdbId` | full details for the review step: `{ fields, posterUrl, backdropUrl }` |
+| PUT | `/api/settings/background` | `{ movieId }` (or `null`): the film whose backdrop sits behind the collection |
+| POST | `/api/movies/:id/wallpaper` | set the film as the desktop wallpaper. JSON only and same-origin only, so other websites can't trigger it. Uses TMDB's full-size backdrop (cached in `data/wallpapers/`), else the saved backdrop, else the poster. macOS: AppleScript via System Events (the first time, macOS asks whether your terminal may control System Events; AppKit's `setDesktopImageURL` from a background process only records the choice on recent macOS, so it isn't used). Windows: PowerShell + `SystemParametersInfo`. Linux: `gsettings` (GNOME). |
 | GET / PUT / DELETE | `/api/settings/tmdb` | key status `{ configured, source, hint }` / save `{ key }` (verified with TMDB first) / remove. The full key is never sent back to the browser. |
 
 Pages read from disk directly in server components (`await connection()` keeps them dynamic). Client components write through the API.

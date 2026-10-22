@@ -22,6 +22,8 @@ export const MEDIA_DIRS = {
   backdrops: path.join(DATA_DIR, 'backdrops'),
 } as const;
 export type MediaKind = keyof typeof MEDIA_DIRS;
+/** Full-size images fetched for desktop wallpapers (see wallpaper.ts), one per film. */
+export const WALLPAPER_DIR = path.join(DATA_DIR, 'wallpapers');
 
 let ready: Promise<void> | null = null;
 
@@ -157,6 +159,8 @@ export async function deleteMovie(id: string): Promise<boolean> {
   for (const [kind, file] of [['posters', movie.poster], ['backdrops', movie.backdrop]] as const) {
     if (file && !/^https?:/.test(file)) await fs.rm(path.join(MEDIA_DIRS[kind], file), { force: true });
   }
+  const wallpapers = await fs.readdir(WALLPAPER_DIR).catch(() => [] as string[]);
+  for (const file of wallpapers.filter((f) => f.startsWith(`${id}.`))) await fs.rm(path.join(WALLPAPER_DIR, file), { force: true });
   return true;
 }
 

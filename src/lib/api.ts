@@ -22,6 +22,14 @@ export const api = {
     form.set('file', file);
     return fetch(`/api/movies/${id}/poster`, { method: 'POST', body: form }).then(json<Movie>);
   },
+  setBackground: (movieId: string | null) =>
+    fetch('/api/settings/background', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ movieId }) }).then(
+      json<{ movieId: string | null }>,
+    ),
+  setWallpaper: (id: string) =>
+    fetch(`/api/movies/${id}/wallpaper`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).then(
+      json<{ ok: true }>,
+    ),
   tmdbMovie: (tmdbId: number) => fetch(`/api/tmdb/movie/${tmdbId}`).then(json<TmdbDetails>),
   tmdbStatus: () => fetch('/api/settings/tmdb').then(json<TmdbStatus>),
   saveTmdbKey: (key: string) =>

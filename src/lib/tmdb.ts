@@ -80,6 +80,12 @@ interface RawDetails {
   };
 }
 
+/** The film's backdrop at full size (for a desktop wallpaper), or null if it has none. */
+export async function tmdbOriginalBackdrop(tmdbId: number) {
+  const d = await tmdb<Pick<RawDetails, 'backdrop_path'>>(`/movie/${tmdbId}`);
+  return d.backdrop_path ? `${TMDB_IMAGE}/original${d.backdrop_path}` : null;
+}
+
 /** Movie metadata from TMDB plus remote image URLs (the caller downloads them). */
 export async function tmdbDetails(tmdbId: number) {
   const d = await tmdb<RawDetails>(`/movie/${tmdbId}`, { append_to_response: 'credits' });

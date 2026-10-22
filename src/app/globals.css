@@ -251,6 +251,7 @@ code {
 .cd-toggle {
   width: 34px;
   height: 34px;
+  padding: 0; /* the browser's default side padding would push the CD off centre */
   border-radius: 50%;
   border: 1px solid rgba(246, 234, 216, 0.3);
   background: rgba(20, 13, 11, 0.45);
@@ -497,87 +498,155 @@ html[data-page='inner'] .sheet {
 }
 
 /* ------------------------------------------------------------------ collection */
+/* The film whose backdrop you picked, washed into the paper behind the collection. */
+.collection-bg {
+  position: absolute;
+  z-index: -1; /* above the paper, under everything in the sheet */
+  inset: 0 0 auto;
+  height: min(100%, 760px);
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center 30%;
+  opacity: 0.62;
+  filter: sepia(0.22) saturate(0.95) brightness(1.12);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 35%, transparent 100%);
+  pointer-events: none;
+  animation: bg-in 0.9s var(--ease-out) both;
+}
+@keyframes bg-in {
+  from {
+    opacity: 0;
+  }
+}
+/* A soft paper glow keeps the subtitle readable over a backdrop. */
+.collection:has(.collection-bg) .kicker {
+  text-shadow: 0 0 2px var(--paper), 0 0 14px var(--paper), 0 0 28px var(--paper);
+}
+.collection:has(.collection-bg) .stats {
+  color: var(--ink-soft);
+  text-shadow: 0 0 1px var(--paper), 0 0 5px var(--paper), 0 0 10px var(--paper);
+}
 .collection-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 20px 32px;
-  margin-bottom: 30px;
-}
-.collection-title h1 {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: clamp(34px, 4vw, 44px);
-}
-.rule {
-  display: inline-block;
-  width: 70px;
-  height: 1px;
-  background: var(--ink-soft);
-  opacity: 0.5;
-  margin-top: 8px;
+  margin-bottom: 22px;
+  padding-top: 26px; /* clear of the cat's tail, which hangs over the paper's edge */
 }
 .kicker {
-  font-family: var(--font-mono), monospace;
-  font-size: 13px;
-  color: var(--ink-soft);
-  margin: 10px 0 0;
-  max-width: 260px;
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: clamp(24px, 2.6vw, 30px);
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0;
 }
 .stats {
   font-family: var(--font-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
-  margin: 6px 0 0;
+  margin: 8px 0 0;
 }
+/* Filters on the left; search, sort and layout on the right. */
 .toolbar {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px 24px;
+  margin-bottom: 30px;
+  --control-h: 38px;
 }
+.filters,
 .toolbar-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
 }
-.pills {
+.toolbar-row {
+  flex: 1;
+  justify-content: flex-end;
+}
+/* All / Watched / To Watch: one pill holding the choices, like the header's. */
+.filter-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px;
+  height: var(--control-h);
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
 }
 .pill {
   border: 0;
   border-radius: 999px;
-  padding: 7px 18px;
-  background: rgba(74, 46, 26, 0.07);
+  padding: 0 16px;
+  background: transparent;
   font-family: var(--font-display), serif;
   font-size: 16px;
   font-weight: 500;
   color: var(--ink-soft);
-  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 .pill:hover {
-  background: rgba(74, 46, 26, 0.12);
+  background: rgba(74, 46, 26, 0.07);
+  color: var(--ink);
 }
 .pill.is-active {
   background: var(--accent);
   color: #fff6ec;
-  box-shadow: 0 4px 12px -4px rgba(200, 100, 44, 0.6);
+  box-shadow: 0 3px 10px -4px rgba(200, 100, 44, 0.7);
+}
+/* Favorites only: a hollow heart that fills in, like the lamp button. */
+.heart-toggle {
+  width: var(--control-h);
+  height: var(--control-h);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-soft);
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.heart-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transition: fill 0.25s, transform 0.35s var(--ease-out);
+}
+.heart-toggle:hover {
+  color: var(--accent);
+  border-color: rgba(200, 100, 44, 0.45);
+}
+.heart-toggle[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: rgba(200, 100, 44, 0.55);
+  background: #fff3e6;
+}
+.heart-toggle[aria-pressed='true'] svg {
+  fill: var(--accent);
+  animation: heart-pop 0.4s var(--ease-out);
+}
+@keyframes heart-pop {
+  40% {
+    transform: scale(1.25);
+  }
 }
 .search {
   display: flex;
   align-items: center;
   gap: 8px;
+  height: var(--control-h);
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 6px 14px;
+  padding: 0 14px;
   min-width: min(280px, 100%);
 }
 .search svg {
@@ -597,16 +666,64 @@ html[data-page='inner'] .sheet {
   font-family: var(--font-mono), monospace;
   font-size: 13px;
 }
-.select {
-  appearance: none;
+/* Sort: what to sort by, joined to a button that flips the order. */
+.sort {
+  display: flex;
+  align-items: stretch;
+  height: var(--control-h);
+  border-radius: 999px;
+  background: var(--card);
   border: 1px solid var(--line);
-  background: var(--card)
+  overflow: hidden;
+}
+.sort select {
+  appearance: none;
+  border: 0;
+  outline: none;
+  background: transparent
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236e5747' stroke-width='1.5'/%3E%3C/svg%3E")
     no-repeat right 12px center;
-  border-radius: 999px;
-  padding: 7px 32px 7px 14px;
+  padding: 0 32px 0 16px;
   font-family: var(--font-mono), monospace;
   font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.sort select:hover,
+.sort-dir:hover {
+  background-color: rgba(74, 46, 26, 0.06);
+}
+.sort select:focus-visible,
+.sort-dir:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 999px;
+}
+.sort-dir {
+  width: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--accent-deep);
+}
+.sort-dir svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s var(--ease-out);
+}
+.sort-dir svg path:first-child {
+  stroke: var(--ink-soft);
+}
+/* Ascending: the whole icon flips over (short bars on top, arrow up). */
+.sort-dir[data-dir='asc'] svg {
+  transform: scaleY(-1);
 }
 .view-toggle {
   display: flex;
@@ -617,8 +734,8 @@ html[data-page='inner'] .sheet {
 .view-toggle button {
   border: 0;
   background: var(--card);
-  width: 36px;
-  height: 34px;
+  width: 38px;
+  height: calc(var(--control-h) - 2px);
   display: grid;
   place-items: center;
 }
@@ -633,6 +750,33 @@ html[data-page='inner'] .sheet {
 .view-toggle button.is-active {
   background: var(--accent);
   color: #fff6ec;
+}
+/* A short message at the bottom of the screen (wallpaper set, errors). */
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 24px;
+  max-width: min(520px, calc(100vw - 32px));
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(20, 13, 11, 0.82);
+  border: 1px solid rgba(246, 234, 216, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--cream);
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  text-align: center;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.4s var(--ease-out);
+}
+.toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .grid {
@@ -654,8 +798,7 @@ html[data-page='inner'] .sheet {
   }
 }
 .card {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   height: 100%;
   background: var(--card);
   border-radius: var(--radius);
@@ -666,6 +809,74 @@ html[data-page='inner'] .sheet {
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
+}
+.card-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: inherit;
+}
+.card-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Small buttons at the bottom-right of the poster: wallpaper and background.
+   They appear on hover; the background one stays while it's in use. */
+.card-actions {
+  position: absolute;
+  inset: 0 0 auto;
+  aspect-ratio: 2 / 3; /* the poster's box */
+  padding: 8px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+.card-action {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--cream);
+  border: 1px solid rgba(246, 234, 216, 0.35);
+  background: rgba(20, 13, 11, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: auto;
+  transition: opacity 0.25s, transform 0.3s var(--ease-out), background 0.2s, border-color 0.2s;
+}
+.card-action svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.card:hover .card-action,
+.card:focus-within .card-action,
+.card-action[aria-pressed='true'] {
+  opacity: 1;
+  transform: none;
+}
+.card-action:hover {
+  border-color: rgba(246, 234, 216, 0.8);
+}
+.card-action[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+@media (hover: none) {
+  .card-action {
+    opacity: 1;
+    transform: none;
+  }
 }
 .card-poster {
   position: relative;
@@ -1672,11 +1883,8 @@ html[data-page='inner'] .sheet {
 
 /* ------------------------------------------------------------------ responsive */
 @media (max-width: 860px) {
-  .toolbar {
-    align-items: stretch;
-    width: 100%;
-  }
   .toolbar-row {
+    flex-basis: 100%;
     justify-content: flex-start;
   }
   .search {
@@ -1716,11 +1924,8 @@ html[data-page='inner'] .sheet {
   .nav-add-label {
     display: none;
   }
-  .pills {
-    gap: 6px;
-  }
   .pill {
-    padding: 5px 12px;
+    padding: 0 12px;
     font-size: 15px;
   }
   .detail-head {

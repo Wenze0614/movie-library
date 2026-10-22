@@ -10,6 +10,8 @@ import { DATA_DIR } from './store';
  */
 export interface Settings {
   tmdbApiKey?: string;
+  /** Id of the film whose backdrop is the collection's background. */
+  collectionBackground?: string;
 }
 
 const FILE = path.join(DATA_DIR, 'settings.json');
