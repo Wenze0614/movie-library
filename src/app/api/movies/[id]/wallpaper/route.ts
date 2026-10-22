@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getMovie } from '@/lib/store';
-import { setWallpaper, WallpaperError } from '@/lib/wallpaper';
+import { requestWallpaper, wallpaperSettled, WallpaperError } from '@/lib/wallpaper';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -20,11 +20,24 @@ export async function POST(req: Request, { params }: Ctx) {
   const movie = await getMovie((await params).id);
   if (!movie) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {
-    await setWallpaper(movie);
-    return NextResponse.json({ ok: true });
+    const result = await requestWallpaper(movie);
+    return NextResponse.json({ ok: true, waiting: result === 'waiting' });
   } catch (err) {
-    console.error('wallpaper:', err);
-    const message = err instanceof WallpaperError ? err.message : 'Couldn’t set the wallpaper. See the server log for details.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return failed(err);
   }
+}
+
+/** Waits for a wallpaper that's waiting for you to leave full screen: `{ status: 'set' | 'replaced' | 'none' }`. */
+export async function GET(_req: Request, { params }: Ctx) {
+  try {
+    return NextResponse.json({ status: await wallpaperSettled((await params).id) });
+  } catch (err) {
+    return failed(err);
+  }
+}
+
+function failed(err: unknown) {
+  console.error('wallpaper:', err);
+  const message = err instanceof WallpaperError ? err.message : 'Couldn’t set the wallpaper. See the server log for details.';
+  return NextResponse.json({ error: message }, { status: 500 });
 }

@@ -1,5 +1,8 @@
 export type WatchStatus = 'watched' | 'watchlist';
 
+/** The operating system of the computer running the server, for setting the wallpaper. */
+export type WallpaperPlatform = 'mac' | 'windows' | 'linux';
+
 export interface CastMember {
   name: string;
   character?: string;

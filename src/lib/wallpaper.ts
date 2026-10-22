@@ -5,7 +5,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { MEDIA_DIRS, WALLPAPER_DIR } from './store';
 import { tmdbOriginalBackdrop } from './tmdb';
-import type { Movie } from './types';
+import type { Movie, WallpaperPlatform } from './types';
 
 /**
  * Sets a film's backdrop as the computer's desktop wallpaper. A web page
@@ -18,8 +18,6 @@ const TIMEOUT = 20_000;
 
 /** A problem worth showing the person as is (the rest only go to the server log). */
 export class WallpaperError extends Error {}
-
-export type WallpaperPlatform = 'mac' | 'windows' | 'linux';
 
 export function wallpaperPlatform(): WallpaperPlatform | null {
   if (process.platform === 'darwin') return 'mac';
@@ -112,4 +110,77 @@ export async function setWallpaper(movie: Movie) {
     }
     await run('gsettings', ['set', 'org.gnome.desktop.background', 'picture-options', 'zoom'], { timeout: TIMEOUT });
   }
+}
+
+// macOS: whether you're on a desktop Space, judged by what's on screen right
+// now: the Dock's own window is on screen on a desktop and gone in a
+// full-screen app's Space. (Measured on a notched MacBook. The obvious-looking
+// signals don't work: com.apple.spaces isn't updated when you switch Spaces,
+// the wallpaper and desktop-icons windows stay listed in full screen, and the
+// browser reports the same sizes as a maximised window.) Needs no permission.
+const MAC_DESKTOP_SCRIPT = `
+ObjC.import('CoreGraphics');
+function run() {
+  const windows = ObjC.deepUnwrap(ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, $.kCGNullWindowID))) || [];
+  const dock = $.CGWindowLevelForKey($.kCGDockWindowLevelKey);
+  return JSON.stringify(windows.some((w) => w.kCGWindowOwnerName === 'Dock' && w.kCGWindowLayer === dock));
+}`;
+
+async function onFullScreenSpace() {
+  try {
+    const { stdout } = await run('osascript', ['-l', 'JavaScript', '-e', MAC_DESKTOP_SCRIPT], { timeout: TIMEOUT });
+    return JSON.parse(stdout) === false;
+  } catch {
+    return false; // can't tell: set it right away
+  }
+}
+
+/**
+ * On a Mac, each Space can have its own wallpaper, and a full-screen window is
+ * a Space of its own. Set from there, the wallpaper would change only behind
+ * the full-screen browser and your desktop would look unchanged. So while the
+ * current Space is full screen, the wallpaper waits until you're back on a
+ * desktop, then it's set there. One waits at a time; the latest click wins.
+ */
+const POLL_MS = 1500;
+const SETTLE_MS = 800; // let the leave-full-screen animation finish
+const WAIT_LIMIT_MS = 30 * 60_000;
+let waiting: { movieId: string; done: Promise<'set' | 'replaced'> } | null = null;
+let latest = 0;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Sets the wallpaper now, or (on a Mac in full screen) once you're back on a desktop. */
+export async function requestWallpaper(movie: Movie): Promise<'set' | 'waiting'> {
+  const ticket = ++latest;
+  if (wallpaperPlatform() !== 'mac' || !(await onFullScreenSpace())) {
+    waiting = null;
+    await setWallpaper(movie);
+    return 'set';
+  }
+  const done = (async (): Promise<'set' | 'replaced'> => {
+    const deadline = Date.now() + WAIT_LIMIT_MS;
+    while (Date.now() < deadline) {
+      await sleep(POLL_MS);
+      if (ticket !== latest) return 'replaced';
+      if (await onFullScreenSpace()) continue;
+      await sleep(SETTLE_MS);
+      if (ticket !== latest) return 'replaced';
+      if (await onFullScreenSpace()) continue; // only passing through, mid-swipe
+      await setWallpaper(movie);
+      return 'set';
+    }
+    throw new WallpaperError('Stopped waiting for you to leave full screen. Click the button again from your desktop.');
+  })();
+  done.catch(() => {}).finally(() => {
+    if (waiting?.done === done) waiting = null;
+  });
+  waiting = { movieId: movie.id, done };
+  return 'waiting';
+}
+
+/** Resolves when the wallpaper waiting for this film has been set (or was replaced by another click). */
+export async function wallpaperSettled(movieId: string): Promise<'set' | 'replaced' | 'none'> {
+  if (!waiting || waiting.movieId !== movieId) return 'none';
+  return waiting.done;
 }

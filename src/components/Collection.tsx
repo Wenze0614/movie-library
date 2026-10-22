@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { site } from '@/config';
 import { api } from '@/lib/api';
 import { backdropUrl, formatDate, lastWatched, posterUrl } from '@/lib/media';
-import type { Movie } from '@/lib/types';
+import type { Movie, WallpaperPlatform } from '@/lib/types';
 import { Poster } from './Poster';
 import { Stars } from './Stars';
+import { useWallpaper } from './useWallpaper';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -66,8 +67,8 @@ export function Collection({
   movies: Movie[];
   /** The film whose backdrop is the collection's background, if any. */
   backgroundId: string | null;
-  /** Whether this computer can take a film as its desktop wallpaper. */
-  wallpaper: boolean;
+  /** The computer's operating system, if it can take a film as its desktop wallpaper. */
+  wallpaper: WallpaperPlatform | null;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [favorites, setFavorites] = useState(false);
@@ -77,6 +78,7 @@ export function Collection({
   const [view, setView] = usePref<'grid' | 'list'>('cinema.view', 'grid');
   const [bgId, setBgId] = useState(backgroundId);
   const [notice, notify] = useNotice();
+  const setWallpaper = useWallpaper(notify);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -111,15 +113,6 @@ export function Collection({
     }
   }
 
-  async function setWallpaper(movie: Movie) {
-    notify(`Setting ${movie.title} as your wallpaper…`, 0);
-    try {
-      await api.setWallpaper(movie.id);
-      notify(`${movie.title} is now your wallpaper`);
-    } catch (err) {
-      notify((err as Error).message, 5000);
-    }
-  }
 
   const sortWords = SORTS[sort].words;
   const dirLabel = dir === 'asc' ? sortWords[0] : sortWords[1];

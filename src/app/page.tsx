@@ -11,7 +11,7 @@ export default async function Home() {
     <Collection
       movies={movies}
       backgroundId={settings.collectionBackground ?? null}
-      wallpaper={wallpaperPlatform() !== null}
+      wallpaper={wallpaperPlatform()}
     />
   );
 }

@@ -28,8 +28,9 @@ export const api = {
     ),
   setWallpaper: (id: string) =>
     fetch(`/api/movies/${id}/wallpaper`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).then(
-      json<{ ok: true }>,
+      json<{ ok: true; waiting: boolean }>,
     ),
+  wallpaperSettled: (id: string) => fetch(`/api/movies/${id}/wallpaper`).then(json<{ status: 'set' | 'replaced' | 'none' }>),
   tmdbMovie: (tmdbId: number) => fetch(`/api/tmdb/movie/${tmdbId}`).then(json<TmdbDetails>),
   tmdbStatus: () => fetch('/api/settings/tmdb').then(json<TmdbStatus>),
   saveTmdbKey: (key: string) =>
