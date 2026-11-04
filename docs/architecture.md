@@ -30,6 +30,8 @@ src/
     layout.tsx                    fonts, hero (3D scene + header), paper sheet, footer
     page.tsx                      collection
     movie/[id]/page.tsx           film page
+    people/page.tsx               everyone in your films' casts
+    people/[key]/page.tsx         one person: bio, your films with them, known for
     api/...                       local JSON API (see below)
     globals.css                   all styles
   components/
@@ -48,6 +50,8 @@ src/
     tmdb.ts, library.ts           TMDB fetch, key lookup/verification, create-with-images (server only)
     settings.ts                   data/settings.json (TMDB key, collection background) (server only)
     wallpaper.ts                  set a film as the desktop wallpaper: macOS / Windows / GNOME (server only)
+    peopleStore.ts                people pool, cast linking, portraits, cached person details (server only)
+    people.ts                     person keys and name matching (shared)
     api.ts                        typed fetch helpers for the browser
     media.ts                      image URLs and date helpers (shared)
   audio/
@@ -117,6 +121,7 @@ Missing fields are filled with defaults when a file is read (`normalize` in `sto
 | GET | `/api/tmdb/search?q=` | `{ enabled, results }`. `enabled: false` when no key is set. |
 | GET | `/api/tmdb/movie/:tmdbId` | full details for the review step: `{ fields, posterUrl, backdropUrl }` |
 | PUT | `/api/settings/background` | `{ movieId }` (or `null`): the film whose backdrop sits behind the collection |
+| (pages) | `/people`, `/people/:key` | People. No API of their own: the server pages read the pool (`peoplePool`, worked out from the films) and the person cache directly. `:key` is the TMDB person id, or `n-<name>` for cast typed by hand. Cast credits carry a TMDB person id (`CastMember.tmdbId`), set when a film is added or filled from TMDB (`linkCast`: one `/movie/:id/credits` request, which also saves w185 portraits to `data/portraits/`), or the first time People is opened for older films (`castLinked` marks a film as done). A person's details (`/person/:id?append_to_response=movie_credits`, trimmed to their 40 most-voted films) are cached in `data/people/<id>.json` for 30 days. "Known for" posters are TMDB URLs, never downloaded. |
 | POST | `/api/movies/:id/wallpaper` | set the film as the desktop wallpaper. JSON only and same-origin only, so other websites can't trigger it. Uses TMDB's full-size backdrop (cached in `data/wallpapers/`), else the saved backdrop, else the poster. macOS: AppleScript via System Events (the first time, macOS asks whether your terminal may control System Events; AppKit's `setDesktopImageURL` from a background process only records the choice on recent macOS, so it isn't used). It changes the current Space only, so when the current Space is a full-screen one (the Dock's own window isn't on screen, from `CGWindowListCopyWindowInfo`; `com.apple.spaces` isn't updated when you switch Spaces, and the wallpaper windows stay listed in full screen), the server waits until you're back on a desktop Space, then sets it; `GET` on the same route resolves when that's done. Windows: PowerShell + `SystemParametersInfo`. Linux: `gsettings` (GNOME). |
 | GET / PUT / DELETE | `/api/settings/tmdb` | key status `{ configured, source, hint }` / save `{ key }` (verified with TMDB first) / remove. The full key is never sent back to the browser. |
 

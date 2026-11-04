@@ -1,7 +1,7 @@
 import type { Movie } from './types';
 
 /** URL for a stored image: local files go through /api/media, remote URLs pass through. */
-export function mediaUrl(kind: 'posters' | 'backdrops', file: string | null | undefined) {
+export function mediaUrl(kind: 'posters' | 'backdrops' | 'portraits', file: string | null | undefined) {
   if (!file) return null;
   return /^https?:\/\//.test(file) ? file : `/api/media/${kind}/${encodeURIComponent(file)}`;
 }

@@ -1,6 +1,6 @@
 import 'server-only';
 import { readSettings } from './settings';
-import type { Movie, TmdbSearchResult } from './types';
+import type { Movie, PersonDetails, TmdbSearchResult } from './types';
 
 /**
  * Optional TMDB integration. The key comes from the key button in the header
@@ -75,8 +75,58 @@ interface RawDetails {
   poster_path: string | null;
   backdrop_path: string | null;
   credits: {
-    cast: { name: string; character: string; order: number }[];
+    cast: { id: number; name: string; character: string; order: number }[];
     crew: { name: string; job: string }[];
+  };
+}
+
+/** A film's cast, with each person's TMDB id and portrait path. */
+export async function tmdbMovieCast(tmdbId: number) {
+  const d = await tmdb<{ cast: { id: number; name: string; profile_path: string | null }[] }>(`/movie/${tmdbId}/credits`);
+  return d.cast;
+}
+
+interface RawPerson {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  place_of_birth: string | null;
+  known_for_department: string | null;
+  profile_path: string | null;
+  movie_credits: {
+    cast: { id: number; title: string; release_date?: string; character: string; poster_path: string | null; vote_count: number }[];
+  };
+}
+
+/** A person's details and acting credits (best known first), trimmed for caching. */
+export async function tmdbPerson(personId: number): Promise<PersonDetails> {
+  const d = await tmdb<RawPerson>(`/person/${personId}`, { append_to_response: 'movie_credits' });
+  const seen = new Set<number>();
+  const credits = d.movie_credits.cast
+    .filter((c) => !seen.has(c.id) && seen.add(c.id))
+    .sort((a, b) => b.vote_count - a.vote_count)
+    .slice(0, 40)
+    .map((c) => ({
+      tmdbId: c.id,
+      title: c.title,
+      year: yearOf(c.release_date),
+      character: c.character,
+      posterPath: c.poster_path,
+      voteCount: c.vote_count,
+    }));
+  return {
+    id: d.id,
+    name: d.name,
+    biography: d.biography,
+    birthday: d.birthday,
+    deathday: d.deathday,
+    placeOfBirth: d.place_of_birth,
+    department: d.known_for_department,
+    profilePath: d.profile_path,
+    credits,
+    fetchedAt: new Date().toISOString(),
   };
 }
 
@@ -102,7 +152,7 @@ export async function tmdbDetails(tmdbId: number) {
     cast: d.credits.cast
       .sort((a, b) => a.order - b.order)
       .slice(0, 8)
-      .map((c) => ({ name: c.name, character: c.character || undefined })),
+      .map((c) => ({ name: c.name, character: c.character || undefined, tmdbId: c.id })),
   };
   return {
     fields,

@@ -781,6 +781,277 @@ html[data-page='inner'] .sheet {
   background: var(--accent);
   color: #fff6ec;
 }
+/* Films / People: large serif tabs where the collection's title used to be.
+   The top padding keeps them clear of the cat's tail. */
+.sheet-tabs {
+  display: flex;
+  gap: 26px;
+  padding-top: 26px;
+  margin-bottom: 18px;
+}
+.sheet-tabs a {
+  position: relative;
+  font-family: var(--font-display), serif;
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink-faint);
+  transition: color 0.2s;
+}
+.sheet-tabs a:hover {
+  color: var(--ink-soft);
+}
+.sheet-tabs a.is-active {
+  color: var(--ink);
+}
+.sheet-tabs a.is-active::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.collection:has(.collection-bg) .sheet-tabs a {
+  text-shadow: 0 0 2px var(--paper), 0 0 14px var(--paper), 0 0 28px var(--paper);
+}
+.toolbar-note {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ people */
+.people-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, 42vw), 1fr));
+  gap: clamp(14px, 2vw, 22px);
+}
+.people-grid > li {
+  animation: rise 0.6s var(--ease-out) both;
+  animation-delay: calc(var(--i) * 30ms);
+}
+.person-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+}
+.person-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.person-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: var(--accent-soft);
+}
+.portrait-placeholder {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display), serif;
+  font-size: 42px;
+  font-weight: 500;
+  color: #fff3e6;
+  background: radial-gradient(circle at 50% 30%, #d98a4a, #5a2f1f 75%);
+}
+.person-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+.person-card-body h3 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.person-card-body .meta {
+  font-size: 11px;
+}
+/* The films of theirs you have, as a row of tiny posters. */
+.person-films {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.person-films .mini-poster {
+  width: 22px;
+  height: 33px;
+  padding: 0;
+  border-radius: 3px;
+  object-fit: cover;
+  flex: none;
+  box-shadow: 0 1px 2px rgba(60, 35, 15, 0.2);
+}
+.person-films .mini-poster :is(.ph-title, .ph-year) {
+  display: none;
+}
+
+/* A person's page. */
+.person-head {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: clamp(20px, 3vw, 40px);
+  align-items: start;
+  margin: 18px 0 40px;
+}
+.person-photo {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+.person-photo.portrait-placeholder {
+  font-size: 64px;
+}
+.person-facts {
+  margin: 4px 0 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.person-info h1 {
+  font-size: clamp(36px, 4.5vw, 52px);
+  line-height: 1.05;
+}
+.person-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 16px;
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.person-bio p {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 16px;
+  line-height: 1.65;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.person-bio.is-open p {
+  display: block;
+}
+.person-section {
+  margin-bottom: 44px;
+}
+.person-section h2 {
+  font-size: clamp(24px, 2.6vw, 30px);
+  margin-bottom: 16px;
+}
+.person-library,
+.person-known {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 40vw), 1fr));
+  gap: clamp(14px, 2vw, 22px);
+}
+.person-film,
+.known-film {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.person-film .poster,
+.known-film .poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 6px;
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+}
+.person-film:hover .poster {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.person-film-title {
+  font-family: var(--font-display), serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.known-film .poster {
+  opacity: 0.92;
+}
+.known-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+/* Light outline pills, so the posters stay the focus. */
+.known-btn {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.known-btn:hover:not(:disabled) {
+  border-color: rgba(200, 100, 44, 0.5);
+  color: var(--accent-deep);
+}
+.known-btn.is-primary {
+  border-color: rgba(200, 100, 44, 0.4);
+  color: var(--accent-deep);
+}
+.known-btn.is-primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff6ec;
+}
+.known-btn:disabled {
+  opacity: 0.55;
+}
+.person-more {
+  margin-top: 14px;
+}
+.dialog-loading {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+}
+/* Cast names on a film's page link to their person page. */
+.cast-link {
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.cast-link:hover strong {
+  color: var(--accent-deep);
+}
+
 /* A short message at the bottom of the screen (wallpaper set, errors). */
 .toast {
   position: fixed;
@@ -1973,6 +2244,10 @@ html[data-page='inner'] .sheet {
   }
   .info-editor label {
     grid-column: 1 / -1;
+  }
+  .person-head {
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
   }
   .row {
     grid-template-columns: 48px 1fr;

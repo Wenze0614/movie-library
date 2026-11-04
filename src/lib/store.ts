@@ -12,6 +12,8 @@ import type { Movie, MoviePatch } from './types';
  *     movies/<id>.json
  *     posters/<id>.jpg
  *     backdrops/<id>.jpg
+ *     portraits/<person id>.jpg
+ *     people/<person id>.json   (cached TMDB details, see people.ts)
  */
 // The data folder lives outside the build, so tell the bundler not to trace it.
 export const DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.CINEMA_DATA_DIR || path.join(process.cwd(), 'data'));
@@ -20,6 +22,8 @@ const SEED_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), 'seed', 'mov
 export const MEDIA_DIRS = {
   posters: path.join(DATA_DIR, 'posters'),
   backdrops: path.join(DATA_DIR, 'backdrops'),
+  /** Small (w185) cast portraits, one per person: <tmdb person id>.jpg. Shared by every film they're in. */
+  portraits: path.join(DATA_DIR, 'portraits'),
 } as const;
 export type MediaKind = keyof typeof MEDIA_DIRS;
 /** Full-size images fetched for desktop wallpapers (see wallpaper.ts), one per film. */

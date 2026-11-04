@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { backdropUrl, formatDate, todayIso } from '@/lib/media';
+import { keepCastIds, personKey } from '@/lib/people';
 import type { Highlight, Movie, MoviePatch } from '@/lib/types';
 import { AddFilmDialog } from './AddFilmDialog';
 import { Poster } from './Poster';
@@ -223,8 +224,10 @@ export function MovieDetail({ initial, tmdb }: { initial: Movie; tmdb: boolean }
               <ul className="cast">
                 {movie.cast.map((c) => (
                   <li key={c.name + c.character}>
-                    <strong>{c.name}</strong>
-                    {c.character && <span>{c.character}</span>}
+                    <Link href={`/people/${personKey(c)}`} className="cast-link">
+                      <strong>{c.name}</strong>
+                      {c.character && <span>{c.character}</span>}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -477,14 +480,17 @@ function InfoEditor({ movie, update }: { movie: Movie; update: (p: MoviePatch, d
           onChange={(e) => {
             setCast(e.target.value);
             update({
-              cast: e.target.value
-                .split('\n')
-                .map((line) => line.trim())
-                .filter(Boolean)
-                .map((line) => {
-                  const [name, character] = line.split(/\s+as\s+/i);
-                  return { name: name.trim(), character: character?.trim() || undefined };
-                }),
+              cast: keepCastIds(
+                e.target.value
+                  .split('\n')
+                  .map((line) => line.trim())
+                  .filter(Boolean)
+                  .map((line) => {
+                    const [name, character] = line.split(/\s+as\s+/i);
+                    return { name: name.trim(), character: character?.trim() || undefined };
+                  }),
+                movie.cast,
+              ),
             });
           }}
         />

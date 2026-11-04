@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { todayIso } from '@/lib/media';
+import { keepCastIds } from '@/lib/people';
 import type { CastMember, MovieDraft, TmdbSearchResult, WatchStatus } from '@/lib/types';
 import { KEY_CHANGED_EVENT, openKeyDialog } from './ApiKeyDialog';
 import { Poster } from './Poster';
@@ -39,17 +40,21 @@ export function AddFilmButton() {
  * a title), then review everything that was fetched before it's saved.
  *
  * In link mode (from a film page) it only searches and hands back the pick.
+ * With `startWith` (a TMDB id, from a person page) it opens straight at the
+ * review step for that film.
  */
 export function AddFilmDialog({
   onClose,
   onPick,
   initialQuery = '',
   linkMode = false,
+  startWith,
 }: {
   onClose: () => void;
   onPick?: (r: TmdbSearchResult) => Promise<void> | void;
   initialQuery?: string;
   linkMode?: boolean;
+  startWith?: number;
 }) {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -62,10 +67,18 @@ export function AddFilmDialog({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<MovieDraft | null>(null);
+  const [starting, setStarting] = useState(Boolean(startWith));
 
   useEffect(() => {
     dialog.current?.showModal();
     input.current?.focus();
+    if (startWith) {
+      api
+        .tmdbMovie(startWith)
+        .then((details) => setDraft({ ...details.fields, posterUrl: details.posterUrl, backdropUrl: details.backdropUrl }))
+        .catch((e: Error) => setError(e.message))
+        .finally(() => setStarting(false));
+    }
     const onKeyChanged = () => setKeyVersion((v) => v + 1);
     window.addEventListener(KEY_CHANGED_EVENT, onKeyChanged);
     return () => window.removeEventListener(KEY_CHANGED_EVENT, onKeyChanged);
@@ -139,7 +152,11 @@ export function AddFilmDialog({
       onClose={onClose}
       onClick={(e) => e.target === dialog.current && dialog.current?.close()}
     >
-      {draft ? (
+      {starting ? (
+        <div className="dialog-body dialog-loading">
+          <span className="spinner" aria-label="Loading" />
+        </div>
+      ) : draft ? (
         <FilmReview
           draft={draft}
           busy={busy === 'add'}
@@ -290,7 +307,7 @@ function FilmReview({
           year: Number(year) || null,
           directors: list(directors),
           genres: list(genres),
-          cast: textToCast(cast),
+          cast: keepCastIds(textToCast(cast), draft.cast),
           overview,
           status,
           watchDates: status === 'watched' && date ? [date] : [],

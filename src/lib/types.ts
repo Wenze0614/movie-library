@@ -6,6 +6,8 @@ export type WallpaperPlatform = 'mac' | 'windows' | 'linux';
 export interface CastMember {
   name: string;
   character?: string;
+  /** TMDB person id, which links this credit to a person page (see people.ts). */
+  tmdbId?: number;
 }
 
 /** A quote, a scene, or a moment worth remembering. */
@@ -53,6 +55,8 @@ export interface Movie {
   tags: string[];
 
   tmdbId: number | null;
+  /** Set once the cast has been matched to TMDB people (so it isn't fetched again). */
+  castLinked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +85,34 @@ export interface TmdbStatus {
   source: 'settings' | 'env' | null;
   /** Last 4 characters, e.g. "…a1b2". The full key never reaches the browser. */
   hint: string | null;
+}
+
+/** One person in your library: everyone in the saved cast of your films. */
+export interface PoolPerson {
+  /** URL key: the TMDB person id, or `n-<name>` for cast typed by hand. */
+  key: string;
+  tmdbId: number | null;
+  name: string;
+  /** Saved portrait URL, if there is one. */
+  portrait: string | null;
+  films: { id: string; title: string; year: number | null; poster: string | null; status: WatchStatus; rating: number | null; tmdbId: number | null; character?: string }[];
+  watched: number;
+  watchlist: number;
+}
+
+/** What TMDB knows about a person, trimmed and cached in data/people/<id>.json. */
+export interface PersonDetails {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  placeOfBirth: string | null;
+  department: string | null;
+  profilePath: string | null;
+  /** Their acting credits, best known (most voted) first. */
+  credits: { tmdbId: number; title: string; year: number | null; character: string; posterPath: string | null; voteCount: number }[];
+  fetchedAt: string;
 }
 
 /** What the add dialog sends to POST /api/movies. */

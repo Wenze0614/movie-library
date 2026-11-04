@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { backdropUrl, formatDate, lastWatched, posterUrl } from '@/lib/media';
 import type { Movie, WallpaperPlatform } from '@/lib/types';
 import { Poster } from './Poster';
+import { SheetTabs } from './SheetTabs';
 import { Stars } from './Stars';
 import { useWallpaper } from './useWallpaper';
 
@@ -134,6 +135,8 @@ export function Collection({
           {movies.length} films · {watched} watched · {movies.length - watched} to watch
         </p>
       </div> */}
+
+      <SheetTabs active="films" />
 
       <div className="toolbar">
         <div className="filters">

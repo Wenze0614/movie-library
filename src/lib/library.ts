@@ -1,4 +1,5 @@
 import 'server-only';
+import { linkCast } from './peopleStore';
 import { createMovie, downloadMedia, getMovie, removeMedia, updateMovie } from './store';
 import { TMDB_IMAGE, tmdbDetails } from './tmdb';
 import type { Movie } from './types';
@@ -8,7 +9,8 @@ const isTmdbImage = (url: unknown): url is string => typeof url === 'string' && 
 
 /**
  * Creates a film from reviewed fields and downloads its poster and backdrop
- * into data/, so the library keeps working offline.
+ * into data/, so the library keeps working offline. Its cast is linked to TMDB
+ * people (and their portraits saved) for the People pages.
  */
 export async function createWithImages(
   fields: Partial<Movie> & { title: string },
@@ -19,8 +21,8 @@ export async function createWithImages(
     isTmdbImage(images.posterUrl) ? downloadMedia('posters', movie.id, images.posterUrl).catch(() => null) : null,
     isTmdbImage(images.backdropUrl) ? downloadMedia('backdrops', movie.id, images.backdropUrl).catch(() => null) : null,
   ]);
-  if (!poster && !backdrop) return movie;
-  return (await updateMovie(movie.id, { poster, backdrop })) ?? movie;
+  const withImages = poster || backdrop ? ((await updateMovie(movie.id, { poster, backdrop })) ?? movie) : movie;
+  return linkCast(withImages).catch(() => withImages);
 }
 
 /**
@@ -37,9 +39,10 @@ export async function applyTmdb(movieId: string, tmdbId: number): Promise<Movie 
   ]);
   if (poster) await removeMedia('posters', movie.poster);
   if (backdrop) await removeMedia('backdrops', movie.backdrop);
-  return updateMovie(movieId, {
+  const updated = await updateMovie(movieId, {
     ...fields,
     poster: poster ?? movie.poster,
     backdrop: backdrop ?? movie.backdrop,
   });
+  return updated && linkCast(updated).catch(() => updated);
 }

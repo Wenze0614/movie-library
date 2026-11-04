@@ -7,9 +7,10 @@ import { AddFilmButton } from './AddFilmDialog';
 import { KeyButton } from './ApiKeyDialog';
 
 export function SiteHeader() {
-  const isHome = usePathname() === '/';
+  const pathname = usePathname();
+  const isHome = pathname === '/' || pathname === '/people';
 
-  // The hero is tall on the home page and starts as a banner elsewhere.
+  // The hero is tall on the two lists (Films, People) and starts as a banner elsewhere.
   useEffect(() => {
     document.documentElement.dataset.page = isHome ? 'home' : 'inner';
   }, [isHome]);
