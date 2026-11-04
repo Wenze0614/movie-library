@@ -11,13 +11,6 @@ const DAY_KEY = 'cinema.day';
 const RAIN_KEY = 'cinema.rain';
 const HOVER_LABEL: Record<Exclude<HoverTarget, null>, string> = { lamp: 'toggle the lamp', cat: 'pet' };
 
-/** How far the page scrolls while the hero collapses into the banner (0 on film pages). */
-function collapseRange(scene: HTMLElement | null, probe: HTMLElement | null) {
-  if (!scene || !probe) return 0;
-  const full = scene.offsetHeight;
-  return full - Math.min(probe.offsetHeight, full);
-}
-
 /**
  * Collapses the hero from --hero-full to --hero-banner as the page scrolls by
  * writing --hero-vis and --hero-progress on the hero element. Only CSS clipping
@@ -26,8 +19,6 @@ function collapseRange(scene: HTMLElement | null, probe: HTMLElement | null) {
  * browser restyle the whole page, film grid included, on every frame.)
  */
 function useCollapsingHero(scene: React.RefObject<HTMLDivElement | null>, probe: React.RefObject<HTMLDivElement | null>) {
-  /** Applies the current scroll right away (the glide calls it in the same frame it scrolls). */
-  const sync = useRef<() => void>(() => {});
   useEffect(() => {
     let raf = 0;
     const update = () => {
@@ -35,17 +26,13 @@ function useCollapsingHero(scene: React.RefObject<HTMLDivElement | null>, probe:
       const root = scene.current?.closest<HTMLElement>('.hero');
       if (!root || !scene.current || !probe.current) return;
       const full = scene.current.offsetHeight;
-      const range = collapseRange(scene.current, probe.current);
+      const range = full - Math.min(probe.current.offsetHeight, full);
       const scrolled = Math.min(Math.max(window.scrollY, 0), range);
       root.style.setProperty('--hero-vis', `${full - scrolled}px`);
       root.style.setProperty('--hero-progress', range > 0 ? (scrolled / range).toFixed(4) : '1');
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);
-    };
-    sync.current = () => {
-      cancelAnimationFrame(raf);
-      update();
     };
     update();
     window.addEventListener('scroll', schedule, { passive: true });
@@ -55,137 +42,10 @@ function useCollapsingHero(scene: React.RefObject<HTMLDivElement | null>, probe:
     if (probe.current) ro.observe(probe.current);
     return () => {
       cancelAnimationFrame(raf);
-      sync.current = () => {};
       window.removeEventListener('scroll', schedule);
       ro.disconnect();
     };
   }, [scene, probe]);
-  return sync;
-}
-
-/** The glide between the two resting states: the full hero and the collapsed banner. */
-const SNAP_MS = 600;
-/** Wheel events closer together than this belong to the same gesture (or its momentum). */
-const GESTURE_GAP_MS = 180;
-/** After touch, keys or the scrollbar stop for this long, a half-collapsed hero finishes its move. */
-const SETTLE_MS = 160;
-
-/** Moves at once and settles gently, like trackpad momentum (ease-in-out felt sluggish, then rushed). */
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
-
-/**
- * The hero never rests half collapsed. While it's collapsing (the page between
- * the top and the collapse point), scrolling down glides to the collapse point
- * and scrolling up glides back to the top. Below that, the collection scrolls
- * normally.
- *
- * The wheel is handled by direction, since one notch is much smaller than the
- * collapse. (CSS scroll snapping picks the snap point nearest to where the
- * notch would land, so it kept bouncing back to the top.) The rest of a
- * trackpad gesture, momentum included, is absorbed until it pauses, so it
- * doesn't fling on into the list. Touch, keys and the scrollbar finish the move
- * in the direction they were going once they stop.
- */
-function useHeroSnap(
-  scene: React.RefObject<HTMLDivElement | null>,
-  probe: React.RefObject<HTMLDivElement | null>,
-  syncHero: React.RefObject<() => void>,
-) {
-  useEffect(() => {
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const range = () => collapseRange(scene.current, probe.current);
-    let frame = 0;
-    let gliding = false;
-    let absorbing = false; // swallowing the rest of the gesture that started a glide
-    let lastWheel = 0;
-    let lastY = window.scrollY;
-    let direction = 0;
-    let touching = false;
-    let settle: ReturnType<typeof setTimeout> | undefined;
-
-    const glideTo = (target: number) => {
-      cancelAnimationFrame(frame);
-      clearTimeout(settle);
-      const from = window.scrollY;
-      absorbing = true;
-      if (Math.abs(target - from) < 1) return;
-      if (reduced.matches) {
-        window.scrollTo(0, target);
-        return;
-      }
-      gliding = true;
-      const start = performance.now();
-      const step = (now: number) => {
-        const t = Math.min((now - start) / SNAP_MS, 1);
-        window.scrollTo(0, from + (target - from) * easeOutCubic(t));
-        syncHero.current(); // in this frame, not the next, so the paper and the banner move together
-        if (t < 1) frame = requestAnimationFrame(step);
-        else gliding = false;
-      };
-      frame = requestAnimationFrame(step);
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX) || document.querySelector('dialog[open]')) return;
-      const now = performance.now();
-      const sameGesture = now - lastWheel < GESTURE_GAP_MS;
-      lastWheel = now;
-      if (gliding || (absorbing && sameGesture)) {
-        e.preventDefault();
-        return;
-      }
-      absorbing = false;
-      const r = range();
-      const y = window.scrollY;
-      if (r < 1) return;
-      if (e.deltaY > 0 && y < r - 1) {
-        e.preventDefault();
-        glideTo(r);
-      } else if (e.deltaY < 0 && y > 0 && y <= r + 1) {
-        e.preventDefault();
-        glideTo(0);
-      }
-    };
-
-    // Touch, keys and the scrollbar: once scrolling stops halfway, finish the move.
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (!gliding && y !== lastY) direction = Math.sign(y - lastY);
-      lastY = y;
-      clearTimeout(settle);
-      if (gliding || touching) return;
-      settle = setTimeout(() => {
-        const r = range();
-        const now = window.scrollY;
-        if (gliding || touching || r < 1 || now <= 0.5 || now >= r - 0.5) return;
-        glideTo(direction < 0 ? 0 : r);
-      }, SETTLE_MS);
-    };
-    const onTouchStart = () => {
-      touching = true;
-      cancelAnimationFrame(frame);
-      gliding = false;
-    };
-    const onTouchEnd = () => {
-      touching = false;
-      onScroll();
-    };
-
-    window.addEventListener('wheel', onWheel, { passive: false });
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      clearTimeout(settle);
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
-    };
-  }, [scene, probe, syncHero]);
 }
 
 /** Mounts the three.js windowsill and layers a little DOM on top for hints. */
@@ -252,8 +112,7 @@ export function HeroScene() {
     };
   }, [cat]);
 
-  const syncHero = useCollapsingHero(sceneRef, probeRef);
-  useHeroSnap(sceneRef, probeRef, syncHero);
+  useCollapsingHero(sceneRef, probeRef);
 
   return (
     <>
