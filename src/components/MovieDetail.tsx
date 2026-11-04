@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { backdropUrl, formatDate, todayIso } from '@/lib/media';
-import { keepCastIds, personKey } from '@/lib/people';
+import { keepCastIds, nameSlug, personKey } from '@/lib/people';
 import type { Highlight, Movie, MoviePatch } from '@/lib/types';
 import { AddFilmDialog } from './AddFilmDialog';
 import { Poster } from './Poster';
@@ -141,7 +141,15 @@ export function MovieDetail({ initial, tmdb }: { initial: Movie; tmdb: boolean }
           </p>
           {movie.directors.length > 0 && (
             <p className="directed">
-              Directed by <strong>{movie.directors.join(', ')}</strong>
+              Directed by{' '}
+              {movie.directors.map((name, i) => (
+                <span key={name}>
+                  {i > 0 && ', '}
+                  <Link href={`/people/${personKey({ name, tmdbId: movie.directorIds?.[nameSlug(name)] })}`} className="director-link">
+                    <strong>{name}</strong>
+                  </Link>
+                </span>
+              ))}
             </p>
           )}
           {movie.tagline && <p className="tagline">“{movie.tagline}”</p>}

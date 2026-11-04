@@ -1041,6 +1041,37 @@ html[data-page='inner'] .sheet {
   place-items: center;
   min-height: 180px;
 }
+/* Cast / Director: small labels on people (both, for someone who's been each). */
+.role-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 2px;
+}
+.person-info .role-labels {
+  margin: 10px 0 0;
+}
+.role-label {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: rgba(74, 46, 26, 0.07);
+}
+.role-label.is-director {
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+}
+.filters .toolbar-note {
+  margin-left: 4px;
+}
+/* Director names on a film's page link to their person page too. */
+.director-link:hover strong {
+  color: var(--accent-deep);
+}
 /* Cast names on a film's page link to their person page. */
 .cast-link {
   display: flex;

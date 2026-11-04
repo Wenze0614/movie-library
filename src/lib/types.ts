@@ -55,8 +55,12 @@ export interface Movie {
   tags: string[];
 
   tmdbId: number | null;
+  /** TMDB person ids of the directors, by name slug (see people.ts), linking them to person pages. */
+  directorIds?: Record<string, number>;
   /** Set once the cast has been matched to TMDB people (so it isn't fetched again). */
   castLinked?: boolean;
+  /** Set once the directors have been matched to TMDB people. */
+  directorsLinked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,7 +91,9 @@ export interface TmdbStatus {
   hint: string | null;
 }
 
-/** One person in your library: everyone in the saved cast of your films. */
+export type PersonRole = 'cast' | 'director';
+
+/** One person in your library: everyone in the saved cast or directors of your films. */
 export interface PoolPerson {
   /** URL key: the TMDB person id, or `n-<name>` for cast typed by hand. */
   key: string;
@@ -95,9 +101,32 @@ export interface PoolPerson {
   name: string;
   /** Saved portrait URL, if there is one. */
   portrait: string | null;
-  films: { id: string; title: string; year: number | null; poster: string | null; status: WatchStatus; rating: number | null; tmdbId: number | null; character?: string }[];
+  /** What they are in your films: cast, director, or both. */
+  roles: PersonRole[];
+  films: {
+    id: string;
+    title: string;
+    year: number | null;
+    poster: string | null;
+    status: WatchStatus;
+    rating: number | null;
+    tmdbId: number | null;
+    /** What they did on this film. */
+    roles: PersonRole[];
+    character?: string;
+  }[];
   watched: number;
   watchlist: number;
+}
+
+/** A film from someone's TMDB filmography. */
+export interface PersonCredit {
+  tmdbId: number;
+  title: string;
+  year: number | null;
+  character: string;
+  posterPath: string | null;
+  voteCount: number;
 }
 
 /** What TMDB knows about a person, trimmed and cached in data/people/<id>.json. */
@@ -111,7 +140,9 @@ export interface PersonDetails {
   department: string | null;
   profilePath: string | null;
   /** Their acting credits, best known (most voted) first. */
-  credits: { tmdbId: number; title: string; year: number | null; character: string; posterPath: string | null; voteCount: number }[];
+  credits: PersonCredit[];
+  /** The films they directed, best known first. */
+  directed: PersonCredit[];
   fetchedAt: string;
 }
 

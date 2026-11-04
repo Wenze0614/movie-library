@@ -5,13 +5,16 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/media';
 import { TMDB_POSTER } from '@/lib/people';
-import type { PersonDetails, PoolPerson } from '@/lib/types';
+import type { PersonCredit, PersonDetails, PersonRole, PoolPerson } from '@/lib/types';
 import { AddFilmDialog } from './AddFilmDialog';
-import { counts, Portrait } from './People';
+import { counts, Portrait, RoleLabels } from './People';
 import { Poster } from './Poster';
 import { Stars } from './Stars';
 
 const KNOWN_FOR_FIRST = 12;
+
+/** A film from their filmography; `alsoAs` is their part in a film they directed and acted in. */
+type Credit = PersonCredit & { alsoAs?: string };
 
 /**
  * One person: who they are (from TMDB, cached), the films of theirs in your
@@ -31,7 +34,6 @@ export function PersonDetail({
 }) {
   const router = useRouter();
   const [moreBio, setMoreBio] = useState(false);
-  const [moreFilms, setMoreFilms] = useState(false);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [watchedDialog, setWatchedDialog] = useState<number | null>(null);
@@ -39,8 +41,33 @@ export function PersonDetail({
   const rated = person.films.filter((f) => f.status === 'watched' && f.rating !== null);
   const average = rated.length ? rated.reduce((sum, f) => sum + (f.rating ?? 0), 0) / rated.length : null;
   const library = new Set(inLibrary);
-  const knownFor = (details?.credits ?? []).filter((c) => !library.has(c.tmdbId));
-  const shownKnownFor = moreFilms ? knownFor : knownFor.slice(0, KNOWN_FOR_FIRST);
+  const notInLibrary = (credits: PersonCredit[] = []) => credits.filter((c) => !library.has(c.tmdbId));
+  // A filmography per role they have in your films; directing first for people TMDB knows mainly as directors.
+  // A film they directed and also acted in is listed once, under Directed, with their part.
+  const both = person.roles.length > 1;
+  const acting = new Map((details?.credits ?? []).map((c) => [c.tmdbId, c]));
+  const directed: Credit[] = notInLibrary(details?.directed).map((c) => ({
+    ...c,
+    alsoAs: both ? acting.get(c.tmdbId)?.character || undefined : undefined,
+  }));
+  const directedIds = new Set(directed.map((c) => c.tmdbId));
+  const sections = person.roles
+    .map((role) =>
+      role === 'director'
+        ? { role, title: 'Directed', credits: directed }
+        : { role, title: 'Known for', credits: notInLibrary(details?.credits).filter((c) => !both || !directedIds.has(c.tmdbId)) },
+    )
+    .sort((a, b) => (details?.department === 'Directing' ? (a.role === 'director' ? -1 : 1) - (b.role === 'director' ? -1 : 1) : 0));
+  const emptyNote = (role: PersonRole) =>
+    !person.tmdbId
+      ? 'This name was typed by hand, so it isn’t linked to TMDB.'
+      : !tmdb
+        ? 'Add a TMDB key (the key button, top right) to see what else they’ve made.'
+        : details
+          ? role === 'director'
+            ? 'You have every film they directed that TMDB knows about.'
+            : 'You have every film of theirs that TMDB knows about.'
+          : 'Couldn’t reach TMDB. Their other films will show up next time you’re online.';
   const facts = [
     details?.department,
     details?.birthday && `Born ${formatDate(details.birthday, { day: 'numeric', month: 'long', year: 'numeric' })}`,
@@ -75,6 +102,7 @@ export function PersonDetail({
         <div className="person-info">
           {facts.length > 0 && <p className="person-facts">{facts.join(' · ').replace(' · in ', ' in ')}</p>}
           <h1>{person.name}</h1>
+          <RoleLabels roles={person.roles} />
           <p className="person-stats">
             {counts(person)} in your library
             {average !== null && (
@@ -104,7 +132,9 @@ export function PersonDetail({
               <Link href={`/movie/${f.id}`} className="person-film">
                 <Poster movie={f} />
                 <span className="person-film-title">{f.title}</span>
-                {f.character && <span className="meta">as {f.character}</span>}
+                <span className="meta">
+                  {[f.roles.includes('director') && 'Directed', f.character && `as ${f.character}`].filter(Boolean).join(' · ')}
+                </span>
                 {f.status === 'watchlist' ? <span className="tag-soft">To watch</span> : <Stars value={f.rating} size={13} />}
               </Link>
             </li>
@@ -112,56 +142,81 @@ export function PersonDetail({
         </ul>
       </section>
 
-      <section className="person-section">
-        <h2>Known for</h2>
-        {error && <p className="form-error">{error}</p>}
-        {knownFor.length > 0 ? (
-          <>
-            <ul className="person-known">
-              {shownKnownFor.map((c) => (
-                <li key={c.tmdbId} className="known-film">
-                  {c.posterPath ? (
-                    // Shown from TMDB, never stored: it's saved only once you add the film.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="poster" src={`${TMDB_POSTER}${c.posterPath}`} alt={`${c.title} poster`} loading="lazy" />
-                  ) : (
-                    <Poster movie={{ title: c.title, year: c.year, poster: null }} />
-                  )}
-                  <span className="person-film-title">{c.title}</span>
-                  <span className="meta">
-                    {[c.year, c.character && `as ${c.character}`].filter(Boolean).join(' · ')}
-                  </span>
-                  <span className="known-actions">
-                    <button type="button" className="known-btn is-primary" disabled={busy !== null} onClick={() => addToWatch(c.tmdbId)}>
-                      {busy === c.tmdbId ? 'Adding…' : '+ To watch'}
-                    </button>
-                    <button type="button" className="known-btn" disabled={busy !== null} onClick={() => setWatchedDialog(c.tmdbId)}>
-                      Watched…
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {knownFor.length > KNOWN_FOR_FIRST && (
-              <button type="button" className="link-btn person-more" onClick={() => setMoreFilms(!moreFilms)}>
-                {moreFilms ? 'Fewer' : `${knownFor.length - KNOWN_FOR_FIRST} more`}
-              </button>
-            )}
-          </>
-        ) : (
-          <p className="muted">
-            {!person.tmdbId
-              ? 'This name was typed by hand, so it isn’t linked to TMDB.'
-              : !tmdb
-                ? 'Add a TMDB key (the key button, top right) to see what else they’ve been in.'
-                : details
-                  ? 'You have every film of theirs that TMDB knows about.'
-                  : 'Couldn’t reach TMDB. Their other films will show up next time you’re online.'}
-          </p>
-        )}
-      </section>
+      {error && <p className="form-error">{error}</p>}
+      {sections.map((section) => (
+        <Filmography
+          key={section.role}
+          title={section.title}
+          credits={section.credits}
+          empty={emptyNote(section.role)}
+          busy={busy}
+          onAdd={addToWatch}
+          onWatched={setWatchedDialog}
+        />
+      ))}
 
       {watchedDialog !== null && <AddFilmDialog startWith={watchedDialog} onClose={() => setWatchedDialog(null)} />}
     </article>
+  );
+}
+
+/** Their other films (not in your library yet), each one click from your To Watch list. */
+function Filmography({
+  title,
+  credits,
+  empty,
+  busy,
+  onAdd,
+  onWatched,
+}: {
+  title: string;
+  credits: Credit[];
+  empty: string;
+  busy: number | null;
+  onAdd: (tmdbId: number) => void;
+  onWatched: (tmdbId: number) => void;
+}) {
+  const [more, setMore] = useState(false);
+  const shown = more ? credits : credits.slice(0, KNOWN_FOR_FIRST);
+  return (
+    <section className="person-section">
+      <h2>{title}</h2>
+      {credits.length > 0 ? (
+        <>
+          <ul className="person-known">
+            {shown.map((c) => (
+              <li key={c.tmdbId} className="known-film">
+                {c.posterPath ? (
+                  // Shown from TMDB, never stored: it's saved only once you add the film.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="poster" src={`${TMDB_POSTER}${c.posterPath}`} alt={`${c.title} poster`} loading="lazy" />
+                ) : (
+                  <Poster movie={{ title: c.title, year: c.year, poster: null }} />
+                )}
+                <span className="person-film-title">{c.title}</span>
+                <span className="meta">
+                  {[c.year, c.character && `as ${c.character}`, c.alsoAs && `also as ${c.alsoAs}`].filter(Boolean).join(' · ')}
+                </span>
+                <span className="known-actions">
+                  <button type="button" className="known-btn is-primary" disabled={busy !== null} onClick={() => onAdd(c.tmdbId)}>
+                    {busy === c.tmdbId ? 'Adding…' : '+ To watch'}
+                  </button>
+                  <button type="button" className="known-btn" disabled={busy !== null} onClick={() => onWatched(c.tmdbId)}>
+                    Watched…
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {credits.length > KNOWN_FOR_FIRST && (
+            <button type="button" className="link-btn person-more" onClick={() => setMore(!more)}>
+              {more ? 'Fewer' : `${credits.length - KNOWN_FOR_FIRST} more`}
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="muted">{empty}</p>
+      )}
+    </section>
   );
 }

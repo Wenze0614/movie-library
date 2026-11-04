@@ -1,6 +1,7 @@
 import 'server-only';
 import { readSettings } from './settings';
-import type { Movie, PersonDetails, TmdbSearchResult } from './types';
+import { nameSlug } from './people';
+import type { Movie, PersonCredit, PersonDetails, TmdbSearchResult } from './types';
 
 /**
  * Optional TMDB integration. The key comes from the key button in the header
@@ -76,14 +77,16 @@ interface RawDetails {
   backdrop_path: string | null;
   credits: {
     cast: { id: number; name: string; character: string; order: number }[];
-    crew: { name: string; job: string }[];
+    crew: { id: number; name: string; job: string }[];
   };
 }
 
-/** A film's cast, with each person's TMDB id and portrait path. */
-export async function tmdbMovieCast(tmdbId: number) {
-  const d = await tmdb<{ cast: { id: number; name: string; profile_path: string | null }[] }>(`/movie/${tmdbId}/credits`);
-  return d.cast;
+type RawCredit = { id: number; name: string; profile_path: string | null };
+
+/** A film's cast and directors, with each person's TMDB id and portrait path. */
+export async function tmdbMovieCredits(tmdbId: number) {
+  const d = await tmdb<{ cast: RawCredit[]; crew: (RawCredit & { job: string })[] }>(`/movie/${tmdbId}/credits`);
+  return { cast: d.cast, directors: d.crew.filter((c) => c.job === 'Director') };
 }
 
 interface RawPerson {
@@ -96,15 +99,16 @@ interface RawPerson {
   known_for_department: string | null;
   profile_path: string | null;
   movie_credits: {
-    cast: { id: number; title: string; release_date?: string; character: string; poster_path: string | null; vote_count: number }[];
+    cast: RawPersonCredit[];
+    crew: (RawPersonCredit & { job: string })[];
   };
 }
+type RawPersonCredit = { id: number; title: string; release_date?: string; character?: string; poster_path: string | null; vote_count: number };
 
-/** A person's details and acting credits (best known first), trimmed for caching. */
-export async function tmdbPerson(personId: number): Promise<PersonDetails> {
-  const d = await tmdb<RawPerson>(`/person/${personId}`, { append_to_response: 'movie_credits' });
+/** The best known (most voted) 40 of a filmography, once each. */
+function bestKnown(credits: RawPersonCredit[]): PersonCredit[] {
   const seen = new Set<number>();
-  const credits = d.movie_credits.cast
+  return credits
     .filter((c) => !seen.has(c.id) && seen.add(c.id))
     .sort((a, b) => b.vote_count - a.vote_count)
     .slice(0, 40)
@@ -112,10 +116,15 @@ export async function tmdbPerson(personId: number): Promise<PersonDetails> {
       tmdbId: c.id,
       title: c.title,
       year: yearOf(c.release_date),
-      character: c.character,
+      character: c.character ?? '',
       posterPath: c.poster_path,
       voteCount: c.vote_count,
     }));
+}
+
+/** A person's details, acting credits and films directed (best known first), trimmed for caching. */
+export async function tmdbPerson(personId: number): Promise<PersonDetails> {
+  const d = await tmdb<RawPerson>(`/person/${personId}`, { append_to_response: 'movie_credits' });
   return {
     id: d.id,
     name: d.name,
@@ -125,7 +134,8 @@ export async function tmdbPerson(personId: number): Promise<PersonDetails> {
     placeOfBirth: d.place_of_birth,
     department: d.known_for_department,
     profilePath: d.profile_path,
-    credits,
+    credits: bestKnown(d.movie_credits.cast),
+    directed: bestKnown(d.movie_credits.crew.filter((c) => c.job === 'Director')),
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -149,6 +159,7 @@ export async function tmdbDetails(tmdbId: number) {
     overview: d.overview ?? '',
     genres: d.genres.map((g) => g.name),
     directors: d.credits.crew.filter((c) => c.job === 'Director').map((c) => c.name),
+    directorIds: Object.fromEntries(d.credits.crew.filter((c) => c.job === 'Director').map((c) => [nameSlug(c.name), c.id])),
     cast: d.credits.cast
       .sort((a, b) => a.order - b.order)
       .slice(0, 8)

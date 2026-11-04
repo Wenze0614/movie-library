@@ -4,15 +4,16 @@ import path from 'node:path';
 import { mediaUrl } from './media';
 import { nameSlug, personKey } from './people';
 import { DATA_DIR, MEDIA_DIRS, listMovies, updateMovie } from './store';
-import { TMDB_IMAGE, tmdbKey, tmdbMovieCast, tmdbPerson } from './tmdb';
-import type { Movie, PersonDetails, PoolPerson } from './types';
+import { TMDB_IMAGE, tmdbKey, tmdbMovieCredits, tmdbPerson } from './tmdb';
+import type { Movie, PersonDetails, PersonRole, PoolPerson } from './types';
 
 /**
- * The people in your library: everyone in the saved cast of your films.
+ * The people in your library: everyone in the saved cast or directors of your
+ * films. Someone can be both, across films or on the same one.
  *
  * The pool itself is worked out from the films every time, so adding or
- * deleting a film updates it. What's stored is small: each cast credit's TMDB
- * person id, a w185 portrait per person (data/portraits, ~8 KB), and, once
+ * deleting a film updates it. What's stored is small: each credit's TMDB
+ * person id, a w185 portrait per person (data/portraits, ~14 KB), and, once
  * you open someone's page, their details (data/people/<id>.json). Posters of
  * their other films are never stored; the page shows them from TMDB.
  */
@@ -36,72 +37,89 @@ async function ensurePortrait(personId: number, profilePath: string | null, have
 }
 
 /**
- * Matches a film's cast to TMDB people (by name, so lists you edited still
- * match) and saves their portraits. One TMDB request per film; marks the film
- * so it isn't asked again.
+ * Matches a film's cast and directors to TMDB people (by name, so lists you
+ * edited still match) and saves their portraits. One TMDB request per film;
+ * marks the film so it isn't asked again.
  */
-export async function linkCast(movie: Movie, have?: Set<string>): Promise<Movie> {
+export async function linkPeople(movie: Movie, have?: Set<string>): Promise<Movie> {
   if (!movie.tmdbId) return movie;
-  const credits = await tmdbMovieCast(movie.tmdbId);
-  const byName = new Map(credits.map((c) => [nameSlug(c.name), c]));
-  const byId = new Map(credits.map((c) => [c.id, c]));
-  const cast = movie.cast.map((c) => (c.tmdbId ? c : { ...c, tmdbId: byName.get(nameSlug(c.name))?.id }));
+  const credits = await tmdbMovieCredits(movie.tmdbId);
+  const castByName = new Map(credits.cast.map((c) => [nameSlug(c.name), c]));
+  const directorByName = new Map(credits.directors.map((c) => [nameSlug(c.name), c]));
+  const cast = movie.cast.map((c) => (c.tmdbId ? c : { ...c, tmdbId: castByName.get(nameSlug(c.name))?.id }));
+  const directorIds = { ...movie.directorIds };
+  for (const name of movie.directors) {
+    const found = directorByName.get(nameSlug(name));
+    if (found && !directorIds[nameSlug(name)]) directorIds[nameSlug(name)] = found.id;
+  }
+  const portraits = new Map([...credits.cast, ...credits.directors].map((c) => [c.id, c.profile_path]));
+  const ids = [...cast.map((c) => c.tmdbId), ...Object.values(directorIds)].filter((id): id is number => Boolean(id));
   const files = have ?? (await portraitFiles());
-  await Promise.all(
-    cast.map((c) => (c.tmdbId ? ensurePortrait(c.tmdbId, byId.get(c.tmdbId)?.profile_path ?? null, files).catch(() => {}) : null)),
-  );
-  return (await updateMovie(movie.id, { cast, castLinked: true })) ?? movie;
+  await Promise.all([...new Set(ids)].map((id) => ensurePortrait(id, portraits.get(id) ?? null, files).catch(() => {})));
+  return (await updateMovie(movie.id, { cast, directorIds, castLinked: true, directorsLinked: true })) ?? movie;
 }
 
 /**
- * Links the cast of films that haven't been linked yet (films from before
- * people existed). Quietly skips everything when there's no TMDB key or no
- * connection; it'll try again next time.
+ * Links the people of films that haven't been linked yet (films from before
+ * People, or before directors were tracked). Quietly skips everything when
+ * there's no TMDB key or no connection; it'll try again next time.
  */
-async function linkLibraryCast(movies: Movie[]): Promise<Movie[]> {
-  const todo = movies.filter((m) => m.tmdbId && !m.castLinked);
+async function linkLibraryPeople(movies: Movie[]): Promise<Movie[]> {
+  const todo = movies.filter((m) => m.tmdbId && (!m.castLinked || !m.directorsLinked));
   if (!todo.length || !(await tmdbKey())) return movies;
   const have = await portraitFiles();
   const linked = new Map<string, Movie>();
   for (let i = 0; i < todo.length; i += 4) {
-    const batch = await Promise.all(todo.slice(i, i + 4).map((m) =>
-        linkCast(m, have).catch((err) => {
-          console.warn(`[people] couldn't link the cast of ${m.id}:`, (err as Error).message);
+    const batch = await Promise.all(
+      todo.slice(i, i + 4).map((m) =>
+        linkPeople(m, have).catch((err) => {
+          console.warn(`[people] couldn't link the people of ${m.id}:`, (err as Error).message);
           return null;
         }),
-      ));
+      ),
+    );
     for (const m of batch) if (m) linked.set(m.id, m);
   }
   return movies.map((m) => linked.get(m.id) ?? m);
 }
 
-/** Everyone in your films' casts, most watched first. */
+/** Everyone in your films' casts and directors, most watched first. */
 export async function peoplePool(): Promise<PoolPerson[]> {
-  const movies = await linkLibraryCast(await listMovies());
+  const movies = await linkLibraryPeople(await listMovies());
   const have = await portraitFiles();
   const people = new Map<string, PoolPerson>();
   const idByName = new Map<string, string>();
 
+  const credits: { m: Movie; name: string; tmdbId?: number; role: PersonRole; character?: string }[] = movies.flatMap((m) => [
+    ...m.cast.map((c) => ({ m, name: c.name, tmdbId: c.tmdbId, role: 'cast' as const, character: c.character })),
+    ...m.directors.map((name) => ({ m, name, tmdbId: m.directorIds?.[nameSlug(name)], role: 'director' as const })),
+  ]);
   // Linked credits first, so hand-typed names can join the same person.
-  const credits = movies.flatMap((m) => m.cast.map((c) => ({ m, c })));
-  credits.sort((a, b) => Number(Boolean(b.c.tmdbId)) - Number(Boolean(a.c.tmdbId)));
-  for (const { m, c } of credits) {
-    const slug = nameSlug(c.name);
+  credits.sort((a, b) => Number(Boolean(b.tmdbId)) - Number(Boolean(a.tmdbId)));
+  for (const { m, name, tmdbId, role, character } of credits) {
+    const slug = nameSlug(name);
     if (!slug) continue;
-    const key = c.tmdbId ? personKey(c) : (idByName.get(slug) ?? personKey(c));
+    const key = tmdbId ? personKey({ name, tmdbId }) : (idByName.get(slug) ?? personKey({ name }));
     let p = people.get(key);
     if (!p) {
-      const tmdbId = c.tmdbId ?? null;
-      const portrait = tmdbId && have.has(`${tmdbId}.jpg`) ? mediaUrl('portraits', `${tmdbId}.jpg`) : null;
-      p = { key, tmdbId, name: c.name, portrait, films: [], watched: 0, watchlist: 0 };
+      const id = tmdbId ?? null;
+      const portrait = id && have.has(`${id}.jpg`) ? mediaUrl('portraits', `${id}.jpg`) : null;
+      p = { key, tmdbId: id, name, portrait, roles: [], films: [], watched: 0, watchlist: 0 };
       people.set(key, p);
-      if (c.tmdbId) idByName.set(slug, key);
+      if (tmdbId) idByName.set(slug, key);
     }
-    if (p.films.some((f) => f.id === m.id)) continue;
-    p.films.push({ id: m.id, title: m.title, year: m.year, poster: m.poster, status: m.status, rating: m.rating, tmdbId: m.tmdbId, character: c.character });
+    if (!p.roles.includes(role)) p.roles.push(role);
+    const film = p.films.find((f) => f.id === m.id);
+    if (film) {
+      if (!film.roles.includes(role)) film.roles.push(role);
+      film.character ??= character;
+      continue;
+    }
+    p.films.push({ id: m.id, title: m.title, year: m.year, poster: m.poster, status: m.status, rating: m.rating, tmdbId: m.tmdbId, roles: [role], character });
     if (m.status === 'watched') p.watched++;
     else p.watchlist++;
   }
+  for (const p of people.values()) p.roles.sort(); // 'cast' before 'director'
 
   return [...people.values()].sort(
     (a, b) => b.watched - a.watched || b.films.length - a.films.length || a.name.localeCompare(b.name),
@@ -128,8 +146,11 @@ export async function personDetails(personId: number): Promise<PersonDetails | n
     .readFile(file, 'utf8')
     .then((s) => JSON.parse(s) as PersonDetails)
     .catch(() => null);
-  if (cached && Date.now() - Date.parse(cached.fetchedAt) < DETAILS_MAX_AGE_MS) return cached;
-  if (!(await tmdbKey())) return cached;
+  // Copies saved before directing was tracked have no `directed`; fetch those again too.
+  const current = cached && Array.isArray(cached.directed) ? cached : null;
+  if (current && Date.now() - Date.parse(current.fetchedAt) < DETAILS_MAX_AGE_MS) return current;
+  const fallback = cached && { ...cached, directed: cached.directed ?? [] };
+  if (!(await tmdbKey())) return fallback;
   try {
     const fresh = await tmdbPerson(personId);
     await fs.mkdir(PEOPLE_DIR, { recursive: true });
@@ -137,6 +158,6 @@ export async function personDetails(personId: number): Promise<PersonDetails | n
     await ensurePortrait(personId, fresh.profilePath, await portraitFiles()).catch(() => {});
     return fresh;
   } catch {
-    return cached;
+    return fallback;
   }
 }
