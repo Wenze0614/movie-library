@@ -7,12 +7,22 @@ import type { CatRect } from '@/three/Experience';
  * The 2D cat: public/rive/cat.riv drawn on its own canvas over the 3D scene.
  * The scene reports where the cat belongs each frame (`place`), and the lamp
  * and petting drive the state machine's `lampOn` / `pet` inputs.
+ *
+ * Re-sizing a canvas's drawing surface clears it, so the cat would blink until
+ * Rive drew again. So each frame only moves and scales the canvas with CSS;
+ * the drawing surface is re-sized once things settle, and only after a real
+ * change in size (resizing the window) or in pixel density (another screen).
  */
+const REBASE_DRIFT = 0.1; // re-size the drawing surface once the CSS scale is off by 10%
+const REBASE_AFTER_MS = 250; // …and the size has stopped changing for this long
 export function useRiveCat(canvas: React.RefObject<HTMLCanvasElement | null>, enabled: boolean) {
   const rive = useRef<Rive | null>(null);
   const inputs = useRef<{ lampOn?: StateMachineInput; pet?: StateMachineInput }>({});
   const lamp = useRef(true);
-  const size = useRef({ w: 0, h: 0 });
+  /** The size (and pixel density) the drawing surface was last made for. */
+  const base = useRef({ w: 0, h: 0, dpr: 0 });
+  const last = useRef<CatRect | null>(null);
+  const rebaseTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (!enabled) return;
@@ -43,24 +53,43 @@ export function useRiveCat(canvas: React.RefObject<HTMLCanvasElement | null>, en
     });
     return () => {
       cancelled = true;
+      clearTimeout(rebaseTimer.current);
       instance?.cleanup();
       rive.current = null;
       inputs.current = {};
     };
   }, [canvas, enabled]);
 
-  return useMemo(
-    () => ({
-      /** Called every frame by the scene; writes styles directly, no React render. */
+  return useMemo(() => {
+    const position = (el: HTMLCanvasElement, rect: CatRect) => {
+      el.style.transform = `translate(${rect.x}px, ${rect.y}px) scale(${rect.width / base.current.w})`;
+    };
+    /** Makes the drawing surface match the cat's current size, then redraws at once. */
+    const rebase = (el: HTMLCanvasElement, rect: CatRect) => {
+      base.current = { w: rect.width, h: rect.height, dpr: window.devicePixelRatio };
+      el.style.width = `${rect.width}px`;
+      el.style.height = `${rect.height}px`;
+      position(el, rect);
+      rive.current?.resizeDrawingSurfaceToCanvas();
+      rive.current?.drawFrame();
+    };
+    return {
+      /** Called by the scene whenever the cat's place changes; writes styles directly, no React render. */
       place(rect: CatRect) {
         const el = canvas.current;
         if (!el) return;
-        el.style.transform = `translate(${rect.x}px, ${rect.y}px)`;
-        if (Math.abs(rect.width - size.current.w) > 1 || Math.abs(rect.height - size.current.h) > 1) {
-          size.current = { w: rect.width, h: rect.height };
-          el.style.width = `${rect.width}px`;
-          el.style.height = `${rect.height}px`;
-          rive.current?.resizeDrawingSurfaceToCanvas();
+        last.current = rect;
+        if (!base.current.w) {
+          rebase(el, rect);
+        } else {
+          position(el, rect);
+          const drift = Math.abs(rect.width / base.current.w - 1);
+          if (drift > REBASE_DRIFT || window.devicePixelRatio !== base.current.dpr) {
+            clearTimeout(rebaseTimer.current);
+            rebaseTimer.current = setTimeout(() => {
+              if (canvas.current && last.current) rebase(canvas.current, last.current);
+            }, REBASE_AFTER_MS);
+          }
         }
         el.dataset.placed = 'true';
       },
@@ -71,7 +100,6 @@ export function useRiveCat(canvas: React.RefObject<HTMLCanvasElement | null>, en
       pet() {
         inputs.current.pet?.fire();
       },
-    }),
-    [canvas],
-  );
+    };
+  }, [canvas]);
 }

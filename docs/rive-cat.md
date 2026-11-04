@@ -66,7 +66,7 @@ These use Rive's older state-machine *inputs* rather than view-model data bindin
 - `y = 290` is the sill top (y = 0.137), at depth x = 1.95;
 - 124 artboard px = 1 world unit.
 
-Every frame it projects that sill line to the screen and reports the cat's rectangle. `useRiveCat` moves the cat's `<canvas>` there with a CSS transform, and only resizes the drawing surface when the size really changes. The canvas lives in `.cat-layer`, which comes *after* the paper lip in the DOM and has a higher z-index. That ordering is what lets the tail hang over the paper in every browser. The layer ignores pointer events.
+Every frame it projects that sill line to the screen and reports the cat's rectangle. `useRiveCat` moves and scales the cat's `<canvas>` there with a CSS transform. Re-sizing a canvas's drawing surface clears it (the cat blinked as the camera drifted, and constantly while resizing the window), so that only happens once the size has settled after a real change (over 10%, 250 ms after the last change) or the pixel density changes, and the frame is redrawn at once. The canvas lives in `.cat-layer`, which comes *after* the paper lip in the DOM and has a higher z-index. That ordering is what lets the tail hang over the paper in every browser. The layer ignores pointer events.
 
 The GLB cat is still in the scene, but invisible (`colorWrite = false`). It keeps casting the cat's shadow onto the sill from the lamp. Clicking the cat is a hit test on the artboard area (`CAT_ART.hit`).
 

@@ -30,6 +30,7 @@
   --hero-vis: var(--hero-full);
   --hero-progress: 0;
   --sheet-overlap: 30px;
+  --sheet-pad: clamp(32px, 5vw, 56px);
   --collection-bg-h: 760px;
   --hero-fade: 26px;
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .12 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -165,6 +166,7 @@ code {
   position: absolute;
   left: 0;
   top: 0;
+  transform-origin: 0 0; /* placed by translate + scale from its top-left corner */
   opacity: 0;
   transition: opacity 1.2s ease;
 }
@@ -485,7 +487,8 @@ code {
   z-index: 1;
   margin-top: calc(var(--hero-full) - var(--sheet-overlap));
   min-height: 60vh;
-  padding: clamp(32px, 5vw, 56px) var(--gutter) 80px;
+  padding: var(--sheet-pad) var(--gutter) 80px;
+  overflow-x: clip; /* the full-width backdrop below may poke past a classic scrollbar */
   border-radius: 28px 28px 0 0;
   background: var(--paper-grain), var(--paper);
 }
@@ -495,15 +498,16 @@ code {
 }
 /* On film pages the banner cat's tail hangs into the sheet; keep the back link clear of it. */
 html[data-page='inner'] .sheet {
-  padding-top: calc(clamp(32px, 5vw, 56px) + 28px);
+  padding-top: calc(var(--sheet-pad) + 28px);
 }
 
 /* ------------------------------------------------------------------ collection */
 /* The film whose backdrop you picked, washed into the paper behind the collection.
-   It's pinned to the screen right under the banner, where the paper's top edge
-   is, so the cards scroll over a still picture. The hero's paper lip (which
-   covers that edge) carries the same picture, sized and placed identically,
-   so the two always read as one. */
+   It starts at the paper's top edge and scrolls up with it until the paper
+   meets the banner, then stays put (sticky), so the cards scroll over a still
+   picture. Sticky runs on the browser's scrolling thread, so it moves in step
+   with the paper. The hero's paper lip (which covers that edge) carries the
+   same picture, sized and placed identically, so the two always read as one. */
 .collection-bg,
 .hero > .hero-lip::after {
   background-image: var(--collection-bg, none);
@@ -515,12 +519,13 @@ html[data-page='inner'] .sheet {
   filter: sepia(0.22) saturate(0.95) brightness(1.12);
 }
 .collection-bg {
-  position: fixed;
+  position: sticky;
   z-index: -1; /* above the paper, under everything in the sheet */
-  top: calc(var(--hero-vis) - var(--sheet-overlap)); /* the paper's top edge, as the banner collapses */
-  left: 0;
-  right: 0;
+  top: calc(var(--hero-banner) - var(--sheet-overlap)); /* where the paper's edge rests under the banner */
+  width: 100vw;
   height: var(--collection-bg-h);
+  /* Full width, starting at the paper's top edge, and taking up no space. */
+  margin: calc(-1 * var(--sheet-pad)) 0 calc(var(--sheet-pad) - var(--collection-bg-h)) calc(50% - 50vw);
   border-radius: 28px 28px 0 0;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 35%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 35%, transparent 100%);
