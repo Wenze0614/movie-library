@@ -22,7 +22,7 @@ Scene colours come from your Blender draft: beige plaster `#e3c6a2`, terracotta 
 | --- | --- | --- |
 | Script | Allura | the site title only |
 | Display | Cormorant Garamond | headings, film titles, filters, quotes |
-| Body | Lora | long-form writing (story, reflections, notes) |
+| Body | Lora | long-form writing (story, notes) |
 | Mono | Courier Prime | labels, meta, dates, buttons |
 
 All are loaded with `next/font/google` and self-hosted at build time.

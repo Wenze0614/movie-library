@@ -97,8 +97,8 @@ interface Movie {
   genres: string[]; runtime: number | null;
   watchDates: string[];             // yyyy-mm-dd; rewatches add entries
   review: string;                   // short take
-  reflections: string;              // longer thoughts
-  notes: string;                    // loose notes
+  notes: string;                    // everything else: thoughts, feelings, craft, trivia
+                                    // (older files' `reflections` are merged into notes when read)
   highlights: { id: string; text: string; at?: string }[];
   tags: string[];
   tmdbId: number | null;

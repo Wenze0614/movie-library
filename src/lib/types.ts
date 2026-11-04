@@ -47,9 +47,7 @@ export interface Movie {
 
   /** Short take — what you'd tell a friend. */
   review: string;
-  /** Longer reflections: what it made you think or feel. */
-  reflections: string;
-  /** Loose notes: craft, music, trivia, things to look up. */
+  /** Everything else, in your own words: what it made you think or feel, craft, music, trivia, things to look up. */
   notes: string;
   highlights: Highlight[];
   tags: string[];

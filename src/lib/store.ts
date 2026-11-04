@@ -86,7 +86,6 @@ export function blankMovie(input: Partial<Movie> & { title: string }): Movie {
     runtime: null,
     watchDates: [],
     review: '',
-    reflections: '',
     notes: '',
     highlights: [],
     tags: [],
@@ -97,9 +96,26 @@ export function blankMovie(input: Partial<Movie> & { title: string }): Movie {
   };
 }
 
-/** Fill in fields that older files may be missing, so the UI can trust the shape. */
-function normalize(raw: Partial<Movie> & { id: string; title: string }): Movie {
-  return { ...blankMovie({ title: raw.title }), ...raw };
+type RawMovie = Partial<Movie> & { id: string; title: string; reflections?: string };
+
+/**
+ * Fill in fields that older files may be missing, so the UI can trust the
+ * shape. Films used to have a separate Reflections field; its text now opens
+ * the Notes (nothing is lost). Returns whether the file needs saving.
+ */
+function normalize(raw: RawMovie): { movie: Movie; changed: boolean } {
+  const { reflections, ...rest } = raw;
+  const movie: Movie = { ...blankMovie({ title: raw.title }), ...rest };
+  const thoughts = reflections?.trim();
+  if (thoughts) movie.notes = movie.notes.trim() ? `${thoughts}\n\n${movie.notes}` : thoughts;
+  return { movie, changed: reflections !== undefined };
+}
+
+/** Reads a film's file, saving it back right away if it was in an older shape. */
+async function readMovie(file: string): Promise<Movie> {
+  const { movie, changed } = normalize(JSON.parse(await fs.readFile(file, 'utf8')));
+  if (changed) await writeAtomic(file, JSON.stringify(movie, null, 2));
+  return movie;
 }
 
 export async function listMovies(): Promise<Movie[]> {
@@ -108,7 +124,7 @@ export async function listMovies(): Promise<Movie[]> {
   const movies = await Promise.all(
     files.map(async (f) => {
       try {
-        return normalize(JSON.parse(await fs.readFile(path.join(MOVIES_DIR, f), 'utf8')));
+        return await readMovie(path.join(MOVIES_DIR, f));
       } catch (err) {
         console.warn(`[store] skipping unreadable ${f}:`, err);
         return null;
@@ -121,7 +137,7 @@ export async function listMovies(): Promise<Movie[]> {
 export async function getMovie(id: string): Promise<Movie | null> {
   await ensureDataDir();
   try {
-    return normalize(JSON.parse(await fs.readFile(movieFile(id), 'utf8')));
+    return await readMovie(movieFile(id));
   } catch {
     return null;
   }

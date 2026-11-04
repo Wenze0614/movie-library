@@ -33,6 +33,6 @@ Half stars out of 5, like Letterboxd. If you'd prefer 10-point scores, it's one 
 3. **Stats page**: films per month, rating distribution, favourite directors and genres; a small chart in the same visual language.
 4. **Lists / shelves**: "Ghibli", "Rainy day films", built on tags or as their own entity.
 5. **Posters in the 3D scene**: framed favourites on the wall beside the window.
-6. **Markdown in notes**: render headings, lists and links in reflections and notes when not focused.
-7. **Search inside notes**: include review, reflections and notes in collection search (cheap; just extend the haystack in `Collection.tsx`).
+6. **Markdown in notes**: render headings, lists and links in notes when not focused.
+7. **Search inside notes**: include review and notes in collection search (cheap; just extend the haystack in `Collection.tsx`).
 8. **Static export** for a public, read-only showcase (see Q2).

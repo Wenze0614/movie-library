@@ -211,18 +211,15 @@ export function MovieDetail({ initial, tmdb }: { initial: Movie; tmdb: boolean }
               onChange={(review) => update({ review })}
             />
           </Section>
-          <Section title="Reflections" hint="What stayed with you">
-            <Note
-              value={movie.reflections}
-              placeholder="What did it make you think about, or feel?"
-              onChange={(reflections) => update({ reflections })}
-            />
-          </Section>
           <Section title="Highlights" hint="Quotes, scenes, moments">
             <Highlights items={movie.highlights} onChange={(highlights) => update({ highlights }, 300)} />
           </Section>
-          <Section title="Notes" hint="Craft, music, trivia, things to look up">
-            <Note value={movie.notes} placeholder="Loose notes…" onChange={(notes) => update({ notes })} />
+          <Section title="Notes" hint="What stayed with you, and anything worth remembering">
+            <Note
+              value={movie.notes}
+              placeholder="What did it make you think about, or feel? Craft, music, trivia, things to look up…"
+              onChange={(notes) => update({ notes })}
+            />
           </Section>
         </div>
 
