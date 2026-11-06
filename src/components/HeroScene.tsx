@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { Experience, HoverTarget } from '@/three/Experience';
 import { CAT_STYLE } from '@/three/catStyle';
 import { sceneAudio } from '@/audio/sceneAudio';
+import { COFFEE_URL } from '@/lib/support';
 import { MusicButton } from './MusicButton';
 import { useRiveCat } from './useRiveCat';
 
 const PURRS = ['purr…', 'mrrp', 'zzz', 'prrr', '♥'];
 const DAY_KEY = 'cinema.day';
 const RAIN_KEY = 'cinema.rain';
-const HOVER_LABEL: Record<Exclude<HoverTarget, null>, string> = { lamp: 'toggle the lamp', cat: 'pet' };
+const HOVER_LABEL: Record<Exclude<HoverTarget, null>, string> = { lamp: 'toggle the lamp', cat: 'pet', mug: 'buy me a coffee' };
 
 /**
  * Collapses the hero from --hero-full to --hero-banner as the page scrolls by
@@ -97,6 +98,8 @@ export function HeroScene() {
           setPurrs((p) => [...p.slice(-4), { id, x, y, text }]);
           setTimeout(() => setPurrs((p) => p.filter((b) => b.id !== id)), 2200);
         },
+        // Straight from the click, so pop-up blockers let the new tab through.
+        onMug: () => window.open(COFFEE_URL, '_blank', 'noopener,noreferrer'),
       });
       exp.current = instance;
       // Come back to the world you left (without the turning animation).

@@ -63,3 +63,7 @@ data/
 - [docs/rive-cat.md](docs/rive-cat.md): the 2D Rive cat; rebuilding it with `npm run cat`, or swapping in your own art
 - [docs/design.md](docs/design.md): visual language: palette, type, components
 - [docs/questions.md](docs/questions.md): open decisions and ideas for what's next
+
+## Support
+
+Enjoying your cinema? Click the steaming mug on the windowsill, or [buy me a coffee on Ko-fi](https://ko-fi.com/wz314) ☕

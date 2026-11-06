@@ -18,7 +18,7 @@ import { createDust, createSteam } from './effects';
 import { createComposer } from './post';
 import { CAT_STYLE } from './catStyle';
 
-export type HoverTarget = 'lamp' | 'cat' | null;
+export type HoverTarget = 'lamp' | 'cat' | 'mug' | null;
 
 
 /** Where the 2D cat sits on screen, in CSS px relative to the scene canvas. */
@@ -34,6 +34,8 @@ export interface ExperienceEvents {
   onHover?: (target: HoverTarget, x: number, y: number) => void;
   /** Screen position (CSS px, relative to the container) of the cat's head. */
   onPet?: (x: number, y: number) => void;
+  /** The mug was clicked (it leads to the author's Ko-fi page). */
+  onMug?: () => void;
   onLampChange?: (on: boolean) => void;
   onDayChange?: (day: boolean) => void;
   onRainChange?: (rain: boolean) => void;
@@ -239,6 +241,7 @@ export class Experience {
       mug: (m) => {
         m.material = ceramicMaterial(s, '#f1ece4', SCENE.mugCenter);
         m.castShadow = true;
+        this.pickables.push({ object: m, target: 'mug' });
       },
       table_light: (m) => {
         this.markLampShade(m);
@@ -340,6 +343,7 @@ export class Experience {
     coffee.rotation.x = -Math.PI / 2;
     coffee.position.set(SCENE.mugCenter.x, 0.64, SCENE.mugCenter.z);
     coffee.receiveShadow = true;
+    this.pickables.push({ object: coffee, target: 'mug' });
 
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 16), bulbMaterial(s));
     bulb.position.copy(SCENE.lampBulb);
@@ -469,6 +473,7 @@ export class Experience {
       const y = -((e.clientY - r.top) / r.height) * 2 + 1;
       const hit = this.pick(x, y);
       if (hit === 'lamp') this.setLamp(this.lampTarget < 0.5);
+      if (hit === 'mug') this.events.onMug?.();
       if (hit === 'cat') {
         const head = SCENE.catHead.clone().project(this.camera);
         this.events.onPet?.((head.x * 0.5 + 0.5) * r.width, (-head.y * 0.5 + 0.5) * r.height);
