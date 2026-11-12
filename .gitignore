@@ -21,3 +21,6 @@ next-env.d.ts
 /public/rive/rive.wasm
 
 /sharing
+
+# desktop app builds (npm run dist:mac / dist:win)
+/dist/

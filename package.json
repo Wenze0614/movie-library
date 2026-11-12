@@ -11,7 +11,9 @@
     "postinstall": "node -e \"require('fs').mkdirSync('public/rive',{recursive:true});require('fs').copyFileSync('node_modules/@rive-app/canvas/rive.wasm','public/rive/rive.wasm')\"",
     "cat": "cd art/rive-cat && python3 generate.py && rive . --once && cp build/cat.riv ../../public/rive/cat.riv",
     "desktop:build": "node scripts/build-desktop.mjs",
-    "desktop": "npm run desktop:build && electron ."
+    "desktop": "npm run desktop:build && electron .",
+    "dist:mac": "node scripts/package-desktop.mjs --mac",
+    "dist:win": "node scripts/package-desktop.mjs --win"
   },
   "dependencies": {
     "@rive-app/canvas": "^2.45.0",
@@ -30,5 +32,65 @@
     "electron-builder": "^26.18.0",
     "typescript": "^5.9.3"
   },
-  "main": "electron/main.mjs"
+  "main": "electron/main.mjs",
+  "author": "Wenze Zhang",
+  "build": {
+    "appId": "com.wz314.moviediary",
+    "productName": "Movie Diary",
+    "copyright": "Copyright © 2026 Wenze Zhang",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "seed/movies",
+        "to": "seed"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Movie Diary uses System Events to set your desktop wallpaper to a film's backdrop."
+      },
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "afterPack": "scripts/after-pack.cjs"
+  }
 }

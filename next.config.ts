@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   ...(process.env.NEXT_OUTPUT === 'standalone'
     ? {
         output: 'standalone' as const,
+        // File tracing misses some of Next's own route runtimes (the media
+        // route failed without this); scripts/build-desktop.mjs checks the rest.
+        outputFileTracingIncludes: { '*': ['node_modules/next/dist/compiled/next-server/*.runtime.prod.js'] },
         // Only the server belongs in the desktop app: never anyone's library,
         // private folders, sources or art. (public/ is copied in separately.)
         outputFileTracingExcludes: {

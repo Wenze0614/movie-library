@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a2618"/>
+      <stop offset="1" stop-color="#1e110c"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1648"/>
+      <stop offset="0.7" stop-color="#3b2a6e"/>
+      <stop offset="1" stop-color="#6a3a6a"/>
+    </linearGradient>
+    <linearGradient id="sill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e09a5a"/>
+      <stop offset="1" stop-color="#9a5130"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.66" r="0.42">
+      <stop offset="0" stop-color="#ffb066" stop-opacity="0.75"/>
+      <stop offset="0.5" stop-color="#ff8a3d" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="crescent">
+      <rect x="600" y="220" width="160" height="160" fill="#fff"/>
+      <circle cx="702" cy="276" r="42" fill="#000"/>
+    </mask>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+    <clipPath id="pane"><rect x="250" y="210" width="524" height="400" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#room)"/>
+
+    <!-- The window at night -->
+    <rect x="226" y="186" width="572" height="448" rx="30" fill="#a4503c"/>
+    <g clip-path="url(#pane)">
+      <rect x="250" y="210" width="524" height="400" fill="url(#sky)"/>
+      <g fill="#fff6e6">
+        <circle cx="300" cy="262" r="4"/><circle cx="372" cy="318" r="3"/><circle cx="452" cy="250" r="5"/>
+        <circle cx="530" cy="300" r="3"/><circle cx="330" cy="380" r="2.5"/><circle cx="600" cy="236" r="3"/>
+        <circle cx="488" cy="372" r="2.5"/><circle cx="410" cy="430" r="2"/>
+      </g>
+      <!-- crescent moon -->
+      <circle cx="680" cy="292" r="46" fill="#ffe9c2" mask="url(#crescent)"/>
+      <!-- hills -->
+      <path d="M250 560 Q 360 470 470 520 T 690 490 T 774 520 V 610 H 250 Z" fill="#241a44"/>
+      <path d="M250 590 Q 420 540 560 580 T 774 570 V 610 H 250 Z" fill="#16102c"/>
+    </g>
+
+    <!-- lamp light pooling in from the right -->
+    <rect x="100" y="100" width="824" height="824" fill="url(#glow)"/>
+
+    <!-- the sill -->
+    <rect x="150" y="634" width="724" height="74" rx="10" fill="url(#sill)"/>
+    <rect x="150" y="700" width="724" height="230" fill="#2a170f"/>
+
+    <!-- the black cat, loafing on the sill, tail over the edge -->
+    <g fill="#0f0907">
+      <path d="M318 640 C 300 590 330 548 400 540 C 470 532 560 540 600 568 C 630 590 628 630 600 642 Z"/>
+      <path d="M560 470 L 572 418 L 608 456 Z"/>
+      <path d="M668 470 L 662 416 L 628 452 Z"/>
+      <ellipse cx="614" cy="520" rx="78" ry="66"/>
+      <path d="M332 630 C 300 660 296 720 330 760 C 350 784 332 806 312 800" stroke="#0f0907" stroke-width="30" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- amber eyes, slightly sleepy -->
+    <path d="M572 512 Q 590 500 606 512 Q 590 528 572 512 Z" fill="#f3b23a"/>
+    <path d="M624 512 Q 642 500 658 512 Q 642 528 624 512 Z" fill="#f3b23a"/>
+    <rect x="587" y="503" width="4" height="18" rx="2" fill="#0f0907"/>
+    <rect x="639" y="503" width="4" height="18" rx="2" fill="#0f0907"/>
+  </g>
+</svg>

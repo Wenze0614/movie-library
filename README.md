@@ -24,6 +24,14 @@ npm run desktop
 
 This builds the app and opens it in its own window (Electron). The desktop app keeps its library in its own folder, not in the project's `data/`: `~/Library/Application Support/Movie Diary/data` on a Mac, `%APPDATA%\Movie Diary\data` on Windows. **File › Show Library Folder** opens it. To bring your browser library across, quit the app and copy the contents of the project's `data/` folder there.
 
+To build an app you can install or share:
+
+```bash
+npm run dist:mac
+```
+
+This makes `dist/Movie Diary-<version>-arm64.dmg` (and a `.zip`) for Apple Silicon Macs. It's ad-hoc signed, not notarized (that needs a paid Apple Developer ID), so the first time it's opened on another Mac, macOS says it can't check it: right-click the app › **Open**, or allow it under System Settings › Privacy & Security. Setting a wallpaper asks once for permission to control System Events. Windows: run `npm run dist:win` on a Windows PC for an installer.
+
 ### Optional: automatic posters, story & cast
 
 1. Get a free API key at https://www.themoviedb.org/settings/api.
