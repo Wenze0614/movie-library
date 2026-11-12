@@ -27,6 +27,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # The app compares its package.json version with the release tag, so a
+      # forgotten bump would offer this release as an update forever.
+      - name: Tag matches package.json version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json version $version"
+            exit 1
+          fi
       - run: npm ci
       - run: npm run ${{ matrix.script }}
       - uses: softprops/action-gh-release@v2

@@ -6,6 +6,7 @@ import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from 'node:
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { migrateOldAppFolder } from './migrate.mjs';
+import { checkForUpdates } from './updates.mjs';
 
 const APP_NAME = 'Movie Library';
 const OLD_APP_NAME = 'Movie Diary';
@@ -16,6 +17,11 @@ const SERVER_START_TIMEOUT_MS = 30_000;
 const DEFAULT_PORT = 39417;
 /** On quit, how long the page's last autosave (sent as it closes) has to reach the server. */
 const SAVE_GRACE_MS = 1500;
+/** The automatic update check waits a little after launch, out of the way of starting up,
+ * then looks again now and then while the app stays open (it checks GitHub at most once a day). */
+const UPDATE_CHECK_DELAY_MS = 10_000;
+const UPDATE_RECHECK_MS = 6 * 60 * 60 * 1000;
+const WEBSITE = 'https://wenze0614.github.io/movie-library/';
 
 app.setName(APP_NAME);
 
@@ -176,8 +182,30 @@ function buildMenu() {
     label: 'Show Library Folder',
     click: () => shell.openPath(dataDir),
   };
+  const checkUpdates = {
+    label: 'Check for Updates…',
+    click: () => checkForUpdates({ manual: true, getWindow: () => mainWindow }),
+  };
   const template = [
-    ...(isMac ? [{ role: 'appMenu' }] : []),
+    ...(isMac
+      ? [
+          {
+            label: APP_NAME,
+            submenu: [
+              { role: 'about' },
+              checkUpdates,
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     { label: 'File', submenu: [showLibrary, { type: 'separator' }, isMac ? { role: 'close' } : { role: 'quit' }] },
     { role: 'editMenu' }, // copy, paste and undo while writing notes
     {
@@ -194,6 +222,10 @@ function buildMenu() {
       ],
     },
     { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [...(isMac ? [] : [checkUpdates, { type: 'separator' }]), { label: 'Movie Library Website', click: () => shell.openExternal(WEBSITE) }],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -224,6 +256,11 @@ if (!app.requestSingleInstanceLock()) {
       return;
     }
     createWindow();
+    const autoCheck = () => checkForUpdates({ getWindow: () => mainWindow });
+    setTimeout(() => {
+      autoCheck();
+      setInterval(autoCheck, UPDATE_RECHECK_MS);
+    }, UPDATE_CHECK_DELAY_MS);
     // On a Mac the app stays open with no window; clicking the Dock icon brings one back.
     app.on('activate', () => {
       if (!mainWindow && origin) createWindow();

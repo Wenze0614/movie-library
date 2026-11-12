@@ -44,6 +44,8 @@ This makes `dist/Movie-Library-mac-arm64.dmg` and `Movie-Library-mac-x64.dmg` (A
 
 **Releases:** push a version tag (`git tag v0.1.0 && git push origin v0.1.0`) and GitHub Actions builds the Mac and Windows apps and attaches them to a GitHub release (`.github/workflows/release.yml`). The intro page links to the latest release's files by these names.
 
+**Updates:** the installed app checks the latest GitHub release once a day (and whenever you choose **Check for Updates…**, in the app menu on a Mac or Help on Windows). When there's a newer version it offers **Download**, which opens the right installer for your computer; install it as before and your library stays put. It doesn't install updates itself, because Electron's built-in updater needs a paid Apple Developer ID on a Mac. Raise `version` in `package.json` before tagging, since that's what the check compares.
+
 ### Optional: automatic posters, story & cast
 
 1. Get a free API key at https://www.themoviedb.org/settings/api.
