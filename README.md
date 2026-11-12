@@ -1,8 +1,8 @@
-# Movie Diary
+# Movie Library
 
 **Website & downloads: https://wenze0614.github.io/movie-library/**
 
-A cozy, local-first movie diary. A 3D windowsill scene at night sits on top: a black cat, a steaming mug and a warm lamp, with the stars outside. Below it is your film collection: what you've watched, what you want to watch, your ratings, reviews, highlights and notes.
+A cozy, local-first movie library. A 3D windowsill scene at night sits on top: a black cat, a steaming mug and a warm lamp, with the stars outside. Below it is your film collection: what you've watched, what you want to watch, your ratings, reviews, highlights and notes.
 
 Everything is stored as plain JSON files on your own machine. No account, no cloud.
 
@@ -24,12 +24,12 @@ npm install
 npm run desktop
 ```
 
-This builds the app and opens it in its own window (Electron). The desktop app keeps its library in its own folder, not in the project's `data/`: `~/Library/Application Support/Movie Diary/data` on a Mac, `%APPDATA%\Movie Diary\data` on Windows. **File › Show Library Folder** opens it. To bring your browser library across, quit the app and copy the contents of the project's `data/` folder there.
+This builds the app and opens it in its own window (Electron). The desktop app keeps its library in its own folder, not in the project's `data/`: `~/Library/Application Support/Movie Library/data` on a Mac, `%APPDATA%\Movie Library\data` on Windows. **File › Show Library Folder** opens it. To bring your browser library across, quit the app and copy the contents of the project's `data/` folder there.
 
 To use **one library** for both `npm run dev` and the desktop app, point the dev server at the app's folder in `.env.local`:
 
 ```
-CINEMA_DATA_DIR="/Users/<you>/Library/Application Support/Movie Diary/data"
+CINEMA_DATA_DIR="/Users/<you>/Library/Application Support/Movie Library/data"
 ```
 
 Both then read and write the same files. Avoid editing the same film in both at once (the last save wins).
@@ -40,7 +40,7 @@ To build an app you can install or share:
 npm run dist:mac
 ```
 
-This makes `dist/Movie-Diary-mac-arm64.dmg` and `Movie-Diary-mac-x64.dmg` (Apple Silicon and Intel, each with a `.zip`). They're ad-hoc signed, not notarized (that needs a paid Apple Developer ID), so the first time one is opened on another Mac, macOS blocks it: click **Done**, then **Open Anyway** under System Settings › Privacy & Security. Setting a wallpaper asks once for permission to control System Events. Windows: `npm run dist:win` on a Windows PC makes `Movie-Diary-windows-x64-setup.exe`.
+This makes `dist/Movie-Library-mac-arm64.dmg` and `Movie-Library-mac-x64.dmg` (Apple Silicon and Intel, each with a `.zip`). They're ad-hoc signed, not notarized (that needs a paid Apple Developer ID), so the first time one is opened on another Mac, macOS blocks it: click **Done**, then **Open Anyway** under System Settings › Privacy & Security. Setting a wallpaper asks once for permission to control System Events. Windows: `npm run dist:win` on a Windows PC makes `Movie-Library-windows-x64-setup.exe`.
 
 **Releases:** push a version tag (`git tag v0.1.0 && git push origin v0.1.0`) and GitHub Actions builds the Mac and Windows apps and attaches them to a GitHub release (`.github/workflows/release.yml`). The intro page links to the latest release's files by these names.
 
@@ -99,7 +99,7 @@ Enjoying your cinema? Click the steaming mug on the windowsill, or [buy me a cof
 
 ## The intro page
 
-`site/` is the public page (plain HTML and CSS, no build step): what Movie Diary is, the downloads and how to get started. Preview it with any static server, for example `python3 -m http.server -d site`. GitHub Actions publishes it to GitHub Pages when it changes on `main` (`.github/workflows/pages.yml`; one-time setup: repo Settings › Pages › Source: GitHub Actions). Its screenshots were taken from a demo library of the sample films, never anyone's own.
+`site/` is the public page (plain HTML and CSS, no build step): what Movie Library is, the downloads and how to get started. Preview it with any static server, for example `python3 -m http.server -d site`. GitHub Actions publishes it to GitHub Pages when it changes on `main` (`.github/workflows/pages.yml`; one-time setup: repo Settings › Pages › Source: GitHub Actions). Its screenshots were taken from a demo library of the sample films, never anyone's own.
 
 ## License
 

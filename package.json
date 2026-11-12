@@ -1,8 +1,8 @@
 {
-  "name": "movie-diary",
+  "name": "movie-library",
   "version": "0.1.0",
   "private": true,
-  "description": "A cozy, local-first movie diary with a 3D windowsill scene.",
+  "description": "A cozy, local-first movie library with a 3D windowsill scene.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -35,8 +35,8 @@
   "main": "electron/main.mjs",
   "author": "Wenze Zhang",
   "build": {
-    "appId": "com.wz314.moviediary",
-    "productName": "Movie Diary",
+    "appId": "com.wz314.movielibrary",
+    "productName": "Movie Library",
     "copyright": "Copyright © 2026 Wenze Zhang",
     "directories": {
       "output": "dist",
@@ -73,11 +73,11 @@
         }
       ],
       "extendInfo": {
-        "NSAppleEventsUsageDescription": "Movie Diary uses System Events to set your desktop wallpaper to a film's backdrop."
+        "NSAppleEventsUsageDescription": "Movie Library uses System Events to set your desktop wallpaper to a film's backdrop."
       },
       "identity": "-",
       "hardenedRuntime": false,
-      "artifactName": "Movie-Diary-mac-${arch}.${ext}"
+      "artifactName": "Movie-Library-mac-${arch}.${ext}"
     },
     "win": {
       "icon": "build/icon.png",
@@ -93,7 +93,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "Movie-Diary-windows-${arch}-setup.${ext}"
+      "artifactName": "Movie-Library-windows-${arch}-setup.${ext}"
     },
     "afterPack": "scripts/after-pack.cjs",
     "publish": null

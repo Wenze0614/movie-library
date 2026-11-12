@@ -1,4 +1,4 @@
-/* Movie Diary intro page: the app's own palette and type. */
+/* Movie Library intro page: the app's own palette and type. */
 :root {
   --night: #140d0b;
   --night-2: #21140f;
@@ -125,7 +125,7 @@ kbd {
   overflow: hidden;
 }
 .script {
-  margin: 0;
+  margin: 0 auto; /* auto: keep the section's centring (a plain 0 pinned it to the left) */
   font-family: 'Allura', cursive;
   font-size: clamp(56px, 9vw, 104px);
   line-height: 1;
@@ -191,7 +191,7 @@ kbd {
   opacity: 0.85;
 }
 .dl-more {
-  margin: 16px 0 0;
+  margin: 16px auto 0;
   font-family: 'Courier Prime', ui-monospace, monospace;
   font-size: 13px;
   color: rgba(246, 234, 216, 0.65);

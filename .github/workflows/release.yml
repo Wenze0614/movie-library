@@ -32,6 +32,6 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/Movie-Diary-*.dmg
-            dist/Movie-Diary-*.zip
-            dist/Movie-Diary-*.exe
+            dist/Movie-Library-*.dmg
+            dist/Movie-Library-*.zip
+            dist/Movie-Library-*.exe

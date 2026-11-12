@@ -5,8 +5,10 @@ import { app, BrowserWindow, dialog, Menu, shell, utilityProcess } from 'electro
 import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import path from 'node:path';
+import { migrateOldAppFolder } from './migrate.mjs';
 
-const APP_NAME = 'Movie Diary';
+const APP_NAME = 'Movie Library';
+const OLD_APP_NAME = 'Movie Diary';
 const BACKGROUND = '#140d0b'; // the hero's night colour, so the window never flashes white
 const SERVER_START_TIMEOUT_MS = 30_000;
 /** The port the app tries first. Keeping it the same keeps the page's origin the
@@ -16,6 +18,19 @@ const DEFAULT_PORT = 39417;
 const SAVE_GRACE_MS = 1500;
 
 app.setName(APP_NAME);
+
+// Before anything is created in the app's folder: bring a library across from
+// the app's old name (it was "Movie Diary"). The new folder's path is built
+// from appData, since asking Electron for userData creates that folder, which
+// would stop the whole old folder (preferences included) from moving.
+if (!process.env.CINEMA_DATA_DIR) {
+  try {
+    const appData = app.getPath('appData');
+    console.log(migrateOldAppFolder(path.join(appData, OLD_APP_NAME), path.join(appData, APP_NAME)));
+  } catch (err) {
+    console.error(`Couldn't move the library from ${OLD_APP_NAME}:`, err);
+  }
+}
 
 // Packaged: the server and sample films sit in the app's resources. From the
 // repo (`npm run desktop`): the standalone build and seed/ in the project.

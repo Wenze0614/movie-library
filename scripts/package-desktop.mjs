@@ -21,7 +21,7 @@ runNode(path.join(root, 'scripts', 'build-desktop.mjs'), [], root);
 let projectDir = root;
 let link = null;
 if (/[^\w\-./\\: ]/.test(root)) {
-  link = path.join(mkdtempSync(path.join(os.tmpdir(), 'movie-diary-')), 'project');
+  link = path.join(mkdtempSync(path.join(os.tmpdir(), 'movie-library-')), 'project');
   symlinkSync(root, link, 'junction');
   projectDir = link;
 }
