@@ -120,7 +120,11 @@ export class LofiJazz {
   private timer: ReturnType<typeof setInterval> | null = null;
   playing = false;
 
-  constructor(private ctx: BaseAudioContext) {
+  /** `output`: where the music goes (the speakers, or a volume control in front of them). */
+  constructor(
+    private ctx: BaseAudioContext,
+    output: AudioNode = ctx.destination,
+  ) {
     // Master: warm low-pass → soft saturation → gentle compression → volume.
     this.master = ctx.createGain();
     this.master.gain.value = 0;
@@ -136,7 +140,7 @@ export class LofiJazz {
     comp.ratio.value = 3;
     comp.attack.value = 0.02;
     comp.release.value = 0.25;
-    tone.connect(warmth).connect(comp).connect(this.master).connect(ctx.destination);
+    tone.connect(warmth).connect(comp).connect(this.master).connect(output);
 
     // A small room for everything to sit in.
     const reverb = ctx.createConvolver();

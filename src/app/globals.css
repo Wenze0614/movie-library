@@ -281,6 +281,99 @@ code {
 .cd-toggle:hover {
   border-color: rgba(246, 234, 216, 0.7);
 }
+/* Volume: a slider that rises above the music and rain buttons on hover or
+   keyboard focus. The bottom padding bridges the gap to the button, so moving
+   up from the button onto the slider doesn't close it. */
+.with-volume {
+  position: relative;
+  display: grid;
+}
+.volume-pop {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 34px;
+  height: 128px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 6px);
+  transition: opacity 0.2s, transform 0.25s var(--ease-out), visibility 0.2s;
+}
+.volume-pop::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 234, 216, 0.3);
+  background: rgba(20, 13, 11, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* :focus-visible rather than :focus-within, so clicking the CD doesn't leave
+   the slider open after the mouse moves away; :active keeps it open mid-drag. */
+.with-volume:hover .volume-pop,
+.with-volume:has(:focus-visible) .volume-pop,
+.with-volume:has(input:active) .volume-pop {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+/* A horizontal slider turned upright (steadier across browsers than a vertical
+   one), placed by its centre: it's wider than the pill until it's turned. */
+.volume-pop input {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 5px); /* the middle of the pill, above the 10px bridge */
+  width: 90px;
+  height: 22px;
+  margin: 0;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.volume-pop input:focus-visible {
+  outline: none;
+}
+.volume-pop input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #ffb066 var(--fill), rgba(246, 234, 216, 0.25) var(--fill));
+}
+.volume-pop input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--cream);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+.volume-pop input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 176, 102, 0.6);
+}
+.volume-pop input::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(246, 234, 216, 0.25);
+}
+.volume-pop input::-moz-range-progress {
+  height: 4px;
+  border-radius: 4px;
+  background: #ffb066;
+}
+.volume-pop input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cream);
+}
+.volume-pop input:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(255, 176, 102, 0.6);
+}
+
 /* Rain: a little cloud; its drops fall while it's raining. */
 .rain-toggle svg {
   width: 20px;

@@ -17,9 +17,46 @@ let rainWanted = false;
 let unlocked = false;
 let sleepTimer: ReturnType<typeof setTimeout> | undefined;
 
+export type SoundKind = 'jazz' | 'rain';
+
+/**
+ * Each sound has its own volume, a gain in front of the speakers. The slider
+ * position (0–1) is squared into loudness so the quiet end fades smoothly,
+ * and it's remembered in this browser.
+ */
+const VOLUME_KEYS: Record<SoundKind, string> = { jazz: 'cinema.volume.jazz', rain: 'cinema.volume.rain' };
+const volumes: Record<SoundKind, number> = { jazz: 1, rain: 1 };
+const buses: Partial<Record<SoundKind, GainNode>> = {};
+let volumesLoaded = false;
+const loudness = (position: number) => position * position;
+
+function loadVolumes() {
+  if (volumesLoaded) return;
+  volumesLoaded = true;
+  try {
+    for (const kind of Object.keys(VOLUME_KEYS) as SoundKind[]) {
+      const saved = localStorage.getItem(VOLUME_KEYS[kind]);
+      const value = saved === null ? NaN : Number(saved);
+      if (value >= 0 && value <= 1) volumes[kind] = value;
+    }
+  } catch {}
+}
+
 function context() {
   ctx ??= new AudioContext({ latencyHint: 'playback' });
   return ctx;
+}
+
+/** The volume control a sound plays through (made with the audio engine). */
+function bus(kind: SoundKind) {
+  if (!buses[kind]) {
+    loadVolumes();
+    const gain = context().createGain();
+    gain.gain.value = loudness(volumes[kind]);
+    gain.connect(context().destination);
+    buses[kind] = gain;
+  }
+  return buses[kind];
 }
 
 async function wake() {
@@ -38,7 +75,7 @@ function sleepWhenQuiet() {
 async function startRain() {
   if (!rain) {
     const { RainSound } = await import('./RainSound');
-    rain = new RainSound(context());
+    rain = new RainSound(context(), bus('rain'));
   }
   await wake();
   rain.start();
@@ -57,7 +94,7 @@ export const sceneAudio = {
     await this.unlock();
     if (!jazz) {
       const { LofiJazz } = await import('./LofiJazz');
-      jazz = new LofiJazz(context());
+      jazz = new LofiJazz(context(), bus('jazz'));
     }
     if (jazz.playing) {
       await jazz.pause();
@@ -67,6 +104,24 @@ export const sceneAudio = {
     await wake();
     await jazz.play();
     return true;
+  },
+
+  /** A sound's volume, 0–1 (the slider position). */
+  volume(kind: SoundKind) {
+    loadVolumes();
+    return volumes[kind];
+  },
+
+  /** Sets a sound's volume (0–1). Doesn't start the audio engine; it applies once the sound plays. */
+  setVolume(kind: SoundKind, position: number) {
+    loadVolumes();
+    volumes[kind] = Math.min(1, Math.max(0, position));
+    try {
+      localStorage.setItem(VOLUME_KEYS[kind], String(volumes[kind]));
+    } catch {}
+    const gain = buses[kind];
+    // A short glide rather than a jump, so moving the slider never clicks.
+    if (gain && ctx) gain.gain.setTargetAtTime(loudness(volumes[kind]), ctx.currentTime, 0.04);
   },
 
   async setRain(on: boolean) {

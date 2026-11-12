@@ -5,6 +5,7 @@ import { CAT_STYLE } from '@/three/catStyle';
 import { sceneAudio } from '@/audio/sceneAudio';
 import { COFFEE_URL } from '@/lib/support';
 import { MusicButton } from './MusicButton';
+import { WithVolume } from './VolumeControl';
 import { useRiveCat } from './useRiveCat';
 
 const PURRS = ['purr…', 'mrrp', 'zzz', 'prrr', '♥'];
@@ -141,25 +142,29 @@ export function HeroScene() {
       )}
       <div ref={probeRef} className="hero-probe" aria-hidden="true" />
       <div className="hero-controls">
-        <MusicButton />
-        <button
-          type="button"
-          className="rain-toggle"
-          onClick={() => {
-            exp.current?.setRain(!rain);
-            void sceneAudio.unlock();
-          }}
-          aria-pressed={rain}
-          title={rain ? 'Let the rain clear' : 'Make it rain'}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path className="cloud" d="M7.5 14.5a3.6 3.6 0 0 1-.4-7.2a5 5 0 0 1 9.5 1.3a3 3 0 0 1 .2 5.9z" />
-            <path className="drop d1" d="M9 17.2l-.8 2.2" />
-            <path className="drop d2" d="M12.6 17.2l-.8 2.2" />
-            <path className="drop d3" d="M16.2 17.2l-.8 2.2" />
-          </svg>
-          <span className="sr-only">{rain ? 'Let the rain clear' : 'Make it rain'}</span>
-        </button>
+        <WithVolume kind="jazz" label="Music volume">
+          <MusicButton />
+        </WithVolume>
+        <WithVolume kind="rain" label="Rain volume">
+          <button
+            type="button"
+            className="rain-toggle"
+            onClick={() => {
+              exp.current?.setRain(!rain);
+              void sceneAudio.unlock();
+            }}
+            aria-pressed={rain}
+            title={rain ? 'Let the rain clear' : 'Make it rain'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path className="cloud" d="M7.5 14.5a3.6 3.6 0 0 1-.4-7.2a5 5 0 0 1 9.5 1.3a3 3 0 0 1 .2 5.9z" />
+              <path className="drop d1" d="M9 17.2l-.8 2.2" />
+              <path className="drop d2" d="M12.6 17.2l-.8 2.2" />
+              <path className="drop d3" d="M16.2 17.2l-.8 2.2" />
+            </svg>
+            <span className="sr-only">{rain ? 'Let the rain clear' : 'Make it rain'}</span>
+          </button>
+        </WithVolume>
         <button
           type="button"
           className="daynight-toggle"

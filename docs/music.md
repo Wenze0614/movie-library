@@ -20,6 +20,7 @@ A slow (70 BPM), swung, happy combo in B♭:
 
 - The `AudioContext` is created on the first click (browsers require a gesture before sound). It's shared with the rain (`sceneAudio.ts`), so the two mix.
 - Notes are scheduled ~1.2 s ahead on a 150 ms timer, so a busy page never causes gaps. Tabs playing audio aren't throttled, so it keeps going in the background.
+- **Volume**: hover the CD (or the rain button) for a slider. Each sound plays through its own gain in `sceneAudio.ts`; the slider position is squared into loudness, so the quiet end fades smoothly, and it's remembered in the browser (`cinema.volume.jazz` / `cinema.volume.rain`).
 - **Pause** fades out over 0.7 s. Once neither the jazz nor the rain is playing, the audio engine is suspended and uses no CPU.
 - Measured cost: 45 s of music renders offline in ~3 s, so live playback uses a small slice of one core.
 

@@ -39,10 +39,14 @@ export class RainSound {
   private timer: ReturnType<typeof setInterval> | null = null;
   private nextTap = 0;
 
-  constructor(private ctx: BaseAudioContext) {
+  /** `output`: where the rain goes (the speakers, or a volume control in front of them). */
+  constructor(
+    private ctx: BaseAudioContext,
+    output: AudioNode = ctx.destination,
+  ) {
     this.out = ctx.createGain();
     this.out.gain.value = 0;
-    this.out.connect(ctx.destination);
+    this.out.connect(output);
     this.taps = ctx.createGain();
     this.taps.gain.value = 1;
     this.taps.connect(this.out);
