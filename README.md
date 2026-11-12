@@ -1,5 +1,7 @@
 # Movie Diary
 
+**Website & downloads: https://wenze0614.github.io/movie-library/**
+
 A cozy, local-first movie diary. A 3D windowsill scene at night sits on top: a black cat, a steaming mug and a warm lamp, with the stars outside. Below it is your film collection: what you've watched, what you want to watch, your ratings, reviews, highlights and notes.
 
 Everything is stored as plain JSON files on your own machine. No account, no cloud.
@@ -24,13 +26,23 @@ npm run desktop
 
 This builds the app and opens it in its own window (Electron). The desktop app keeps its library in its own folder, not in the project's `data/`: `~/Library/Application Support/Movie Diary/data` on a Mac, `%APPDATA%\Movie Diary\data` on Windows. **File › Show Library Folder** opens it. To bring your browser library across, quit the app and copy the contents of the project's `data/` folder there.
 
+To use **one library** for both `npm run dev` and the desktop app, point the dev server at the app's folder in `.env.local`:
+
+```
+CINEMA_DATA_DIR="/Users/<you>/Library/Application Support/Movie Diary/data"
+```
+
+Both then read and write the same files. Avoid editing the same film in both at once (the last save wins).
+
 To build an app you can install or share:
 
 ```bash
 npm run dist:mac
 ```
 
-This makes `dist/Movie Diary-<version>-arm64.dmg` (and a `.zip`) for Apple Silicon Macs. It's ad-hoc signed, not notarized (that needs a paid Apple Developer ID), so the first time it's opened on another Mac, macOS says it can't check it: right-click the app › **Open**, or allow it under System Settings › Privacy & Security. Setting a wallpaper asks once for permission to control System Events. Windows: run `npm run dist:win` on a Windows PC for an installer.
+This makes `dist/Movie-Diary-mac-arm64.dmg` and `Movie-Diary-mac-x64.dmg` (Apple Silicon and Intel, each with a `.zip`). They're ad-hoc signed, not notarized (that needs a paid Apple Developer ID), so the first time one is opened on another Mac, macOS blocks it: click **Done**, then **Open Anyway** under System Settings › Privacy & Security. Setting a wallpaper asks once for permission to control System Events. Windows: `npm run dist:win` on a Windows PC makes `Movie-Diary-windows-x64-setup.exe`.
+
+**Releases:** push a version tag (`git tag v0.1.0 && git push origin v0.1.0`) and GitHub Actions builds the Mac and Windows apps and attaches them to a GitHub release (`.github/workflows/release.yml`). The intro page links to the latest release's files by these names.
 
 ### Optional: automatic posters, story & cast
 
@@ -84,3 +96,11 @@ data/
 ## Support
 
 Enjoying your cinema? Click the steaming mug on the windowsill, or [buy me a coffee on Ko-fi](https://ko-fi.com/wz314) ☕
+
+## The intro page
+
+`site/` is the public page (plain HTML and CSS, no build step): what Movie Diary is, the downloads and how to get started. Preview it with any static server, for example `python3 -m http.server -d site`. GitHub Actions publishes it to GitHub Pages when it changes on `main` (`.github/workflows/pages.yml`; one-time setup: repo Settings › Pages › Source: GitHub Actions). Its screenshots were taken from a demo library of the sample films, never anyone's own.
+
+## License
+
+Public domain: [CC0 1.0](LICENSE). Film data and images come from TMDB: this product uses the TMDB API but is not endorsed or certified by TMDB.

@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
             'scripts/**',
             'electron/**',
             'dist/**',
+            'site/**',
+            '.github/**',
             'public/**',
             // Next's image resizing isn't used (posters are plain <img>s).
             'node_modules/sharp/**',

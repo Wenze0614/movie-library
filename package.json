@@ -60,13 +60,15 @@
         {
           "target": "dmg",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         }
       ],
@@ -74,7 +76,8 @@
         "NSAppleEventsUsageDescription": "Movie Diary uses System Events to set your desktop wallpaper to a film's backdrop."
       },
       "identity": "-",
-      "hardenedRuntime": false
+      "hardenedRuntime": false,
+      "artifactName": "Movie-Diary-mac-${arch}.${ext}"
     },
     "win": {
       "icon": "build/icon.png",
@@ -89,8 +92,11 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Movie-Diary-windows-${arch}-setup.${ext}"
     },
-    "afterPack": "scripts/after-pack.cjs"
-  }
+    "afterPack": "scripts/after-pack.cjs",
+    "publish": null
+  },
+  "license": "CC0-1.0"
 }

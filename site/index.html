@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Movie Diary — a cozy little cinema for the films you love</title>
+    <meta
+      name="description"
+      content="A free desktop movie diary for Mac and Windows: your films, ratings, reviews and notes on a windowsill with a sleepy black cat, lo-fi jazz and rain on the glass. Everything stays on your computer."
+    />
+    <meta name="theme-color" content="#140d0b" />
+    <meta property="og:title" content="Movie Diary" />
+    <meta property="og:description" content="A cozy little cinema for the films you love. Free for Mac and Windows; your library stays on your computer." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://wenze0614.github.io/movie-library/assets/og-image.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/favicon-64.png" />
+    <link rel="apple-touch-icon" href="assets/icon-256.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Courier+Prime&family=Lora:ital@0;1&display=swap"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="main.js" defer></script>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="#">
+        <img src="assets/icon-256.png" alt="" width="34" height="34" />
+        <span>Movie Diary</span>
+      </a>
+      <nav aria-label="Sections">
+        <a href="#download">Download</a>
+        <a href="#start">Get started</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/Wenze0614/movie-library">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero: what it is, and the downloads -->
+      <section class="hero" id="download">
+        <p class="script">Movie Diary</p>
+        <h1>A cozy little cinema for the films you love.</h1>
+        <p class="lede">
+          Keep every film you've watched or want to watch, with your ratings, reviews, favourite moments and notes, on a
+          windowsill with a sleepy black cat, lo-fi jazz and rain on the glass. Free, and your library stays on your computer.
+        </p>
+
+        <div class="downloads" data-os-picker>
+          <a class="dl dl-primary" data-os="mac" href="https://github.com/Wenze0614/movie-library/releases/latest/download/Movie-Diary-mac-arm64.dmg">
+            <span class="dl-title">Download for Mac</span>
+            <span class="dl-sub">Apple Silicon (M1 and later)</span>
+          </a>
+          <a class="dl" data-os="windows" href="https://github.com/Wenze0614/movie-library/releases/latest/download/Movie-Diary-windows-x64-setup.exe">
+            <span class="dl-title">Download for Windows</span>
+            <span class="dl-sub">Windows 10 and 11, 64-bit</span>
+          </a>
+        </div>
+        <p class="dl-more">
+          Intel Mac? <a href="https://github.com/Wenze0614/movie-library/releases/latest/download/Movie-Diary-mac-x64.dmg">Download the Intel version</a>
+          · <a href="https://github.com/Wenze0614/movie-library/releases">All releases</a> · Free and open source (CC0)
+        </p>
+
+        <figure class="hero-shot">
+          <img src="assets/hero-night.jpg" alt="Movie Diary: a black cat on a lamp-lit windowsill at night, with the film collection below" width="1600" height="1000" />
+        </figure>
+      </section>
+
+      <!-- The scene -->
+      <section class="scene">
+        <h2>Pull up a chair</h2>
+        <p class="section-lede">Click the lamp, swap night for day, let it rain, or put on some jazz. The cat doesn't mind.</p>
+        <div class="scene-grid">
+          <figure>
+            <img src="assets/scene-day.jpg" alt="The windowsill by day: a meadow, wooded hills and snowy mountains" loading="lazy" width="1200" height="508" />
+            <figcaption>Day, with a flower meadow outside</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/scene-rain.jpg" alt="The windowsill at night in the rain, drops running down the glass" loading="lazy" width="1200" height="508" />
+            <figcaption>Rain, with a soft patter under the music</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- First launch -->
+      <section class="paper first-launch">
+        <h2>Opening it the first time</h2>
+        <p class="section-lede">
+          Movie Diary isn't signed with a paid Apple or Microsoft certificate yet, so your computer asks you to confirm once.
+        </p>
+        <div class="two-col">
+          <div class="card">
+            <h3>On a Mac</h3>
+            <ol>
+              <li>Open the downloaded <code>.dmg</code> and drag <strong>Movie Diary</strong> into <strong>Applications</strong>.</li>
+              <li>Open it. macOS says it can't check it for malicious software: click <strong>Done</strong>.</li>
+              <li>Go to <strong>System Settings › Privacy &amp; Security</strong>, scroll down and click <strong>Open Anyway</strong>, then confirm.</li>
+            </ol>
+            <p class="note">After that it opens like any other app.</p>
+          </div>
+          <div class="card">
+            <h3>On Windows</h3>
+            <ol>
+              <li>Run the downloaded installer.</li>
+              <li>If you see “Windows protected your PC”, click <strong>More info</strong>, then <strong>Run anyway</strong>.</li>
+              <li>Follow the installer, then open Movie Diary from the Start menu.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- Getting started -->
+      <section class="paper steps" id="start">
+        <h2>Getting started</h2>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">1</p>
+            <h3>Connect the movie database</h3>
+            <p>
+              Optional, but it fills in posters, the story, director and cast for you. Make a free account at
+              <a href="https://www.themoviedb.org/signup">themoviedb.org</a>, then go to <strong>Settings › API</strong> and copy your
+              key (either the API Key or the API Read Access Token works).
+            </p>
+            <p>Click the <strong>key button</strong> at the top right of Movie Diary and paste it. The dot turns green once you're connected.</p>
+            <p class="note">The key is saved only on your computer.</p>
+          </div>
+          <figure class="step-shot narrow">
+            <img src="assets/key-dialog.jpg" alt="The key dialog, with a box to paste your TMDB key" loading="lazy" width="800" height="655" />
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">2</p>
+            <h3>Add a film</h3>
+            <p>
+              Click <strong>+ Add film</strong> (or press <kbd>⌘K</kbd> / <kbd>Ctrl K</kbd>) and search. Pick the right one and check
+              the details: poster, year, director, genres, cast and story are filled in, and you can change anything.
+            </p>
+            <p>
+              Choose <strong>Watched</strong> (with the date and your stars) or <strong>To watch</strong>, then <strong>Add to library</strong>.
+              Posters are saved on your computer, so your library works offline.
+            </p>
+          </div>
+          <div class="step-shots">
+            <figure class="step-shot narrow">
+              <img src="assets/add-film.jpg" alt="Searching for Amélie in the add dialog" loading="lazy" width="900" height="923" />
+            </figure>
+            <figure class="step-shot narrow">
+              <img src="assets/review.jpg" alt="The review step for Amélie, with Watched, a date and stars" loading="lazy" width="900" height="966" />
+            </figure>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">3</p>
+            <h3>Write about it</h3>
+            <p>
+              Open a film to make it yours. Everything saves as you type: <strong>My Review</strong> for what you'd tell a friend,
+              <strong>Highlights</strong> for quotes and moments (with an optional timestamp), and <strong>Notes</strong> for everything
+              else.
+            </p>
+            <p>Rate it in half stars, mark it a favourite, and add a date each time you rewatch.</p>
+          </div>
+          <figure class="step-shot">
+            <img src="assets/film-page.jpg" alt="Spirited Away's page, with its poster, rating and story" loading="lazy" width="1400" height="875" />
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">4</p>
+            <h3>Meet the people</h3>
+            <p>
+              The <strong>People</strong> tab gathers everyone in the cast and behind the camera of your films, with a Cast /
+              Directors switch, so you can see whose films you keep coming back to.
+            </p>
+            <p>Open someone to see their films in your library and what else they're known for. Add any of them to To watch in one click.</p>
+          </div>
+          <div class="step-shots stack">
+            <figure class="step-shot">
+              <img src="assets/people.jpg" alt="The People tab: portraits of actors from your films" loading="lazy" width="1400" height="875" />
+            </figure>
+            <figure class="step-shot">
+              <img src="assets/person.jpg" alt="A person's page, with their photo, bio and films" loading="lazy" width="1400" height="875" />
+            </figure>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">5</p>
+            <h3>Wallpapers and backdrops</h3>
+            <p>
+              Hover over a poster for two small buttons. The <strong>picture frame</strong> puts the film's backdrop behind your
+              collection. The <strong>laptop</strong> makes it your desktop wallpaper, in full size.
+            </p>
+            <p class="note">
+              On a Mac, the first time you set a wallpaper, macOS asks whether Movie Diary may control System Events: click
+              <strong>OK</strong>. If Movie Diary is full screen, the new wallpaper appears once you're back on your desktop.
+            </p>
+          </div>
+          <div class="step-shots">
+            <figure class="step-shot tiny">
+              <img src="assets/card-buttons.jpg" alt="A poster with the wallpaper and background buttons showing" loading="lazy" width="420" height="771" />
+            </figure>
+            <figure class="step-shot">
+              <img src="assets/backdrop.jpg" alt="The collection with La La Land's backdrop behind it" loading="lazy" width="1400" height="875" />
+            </figure>
+          </div>
+        </article>
+
+        <article class="step">
+          <div class="step-text">
+            <p class="step-num">6</p>
+            <h3>Settle in</h3>
+            <p>
+              The four round buttons on the windowsill play <strong>music</strong> (lo-fi jazz, composed live, so it never repeats
+              exactly), bring <strong>rain</strong>, swap <strong>night and day</strong>, and switch the <strong>lamp</strong>. Turn
+              the lamp off and the cat falls asleep. Click the cat to pet it.
+            </p>
+            <p>And if you'd like to say thanks, click the steaming mug.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- Data -->
+      <section class="paper data">
+        <h2>Your library is yours</h2>
+        <p>
+          There's no account and no tracking. Your library is plain files on your computer: open it with
+          <strong>File › Show Library Folder</strong>, and back it up by copying that folder.
+        </p>
+        <ul class="paths">
+          <li><span>Mac</span><code>~/Library/Application Support/Movie Diary/data</code></li>
+          <li><span>Windows</span><code>%APPDATA%\Movie Diary\data</code></li>
+        </ul>
+        <p class="note">The only time it goes online is to look up films on TMDB, and to fetch a full-size wallpaper.</p>
+      </section>
+
+      <!-- FAQ -->
+      <section class="paper faq" id="faq">
+        <h2>Questions</h2>
+        <details>
+          <summary>Is it free?</summary>
+          <p>
+            Yes, completely. It's open source and in the public domain (CC0). If you enjoy it, you can
+            <a href="https://ko-fi.com/wz314">buy me a coffee</a>.
+          </p>
+        </details>
+        <details>
+          <summary>Do I need the internet?</summary>
+          <p>Only to search for films and fill in their details from TMDB. Your library, notes and the scene all work offline.</p>
+        </details>
+        <details>
+          <summary>Can I use it without a TMDB key?</summary>
+          <p>Yes. You type the title and details yourself, and can add your own poster by dropping an image onto the film's page.</p>
+        </details>
+        <details>
+          <summary>What about Linux?</summary>
+          <p>
+            There's no Linux download yet, but you can run it from the source code: see the
+            <a href="https://github.com/Wenze0614/movie-library#readme">README</a>.
+          </p>
+        </details>
+        <details>
+          <summary>How do I move my library to another computer?</summary>
+          <p>Copy your library folder (above) to the same place on the other computer, with Movie Diary closed.</p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Made by Wenze Zhang · <a href="https://ko-fi.com/wz314">Ko-fi</a> · <a href="https://github.com/Wenze0614/movie-library">GitHub</a> ·
+        Public domain (CC0)
+      </p>
+      <p class="tmdb">
+        Film data and images from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or
+        certified by TMDB.
+      </p>
+    </footer>
+  </body>
+</html>
