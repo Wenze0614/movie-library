@@ -23,6 +23,8 @@ public/
   textures/ivy_basecolor.jpg      ivy texture (downscaled from the 8K original)
 seed/movies/*.json                sample films copied into data/ on first run
 data/                             your library (git-ignored, created on first run)
+electron/main.mjs                 the desktop app: starts the server, opens the window (see below)
+scripts/build-desktop.mjs         builds the self-contained server the desktop app runs
 
 src/
   config.ts                       site title, tagline, footer quote
@@ -134,3 +136,18 @@ Pages read from disk directly in server components (`await connection()` keeps t
 ## Security note
 
 The app is meant to run on `localhost` for one person. The API has no authentication. Don't expose `npm run dev` / `npm start` to the internet as-is. If you want a public showcase, see the "static export" idea in [questions.md](questions.md).
+
+## Desktop app (Electron)
+
+`npm run desktop` builds a self-contained Next server (`output: 'standalone'`, only when `NEXT_OUTPUT=standalone`, via `scripts/build-desktop.mjs`, which also copies in `public/` and the static assets) and opens it in Electron. `electron/main.mjs`:
+
+- starts that server in a background process (`utilityProcess`) bound to `127.0.0.1` only, on the same port each launch when it can (39417, or the last free one it fell back to, in `server-port.json`): the page's origin stays the same, so preferences saved in the browser survive restarts. It runs with `CINEMA_DATA_DIR` pointing at the app's own folder (`app.getPath('userData')/data`) and `CINEMA_SEED_DIR` at the bundled sample films; its output goes to the app's log folder (`server.log`);
+- waits until it answers, then shows it in a window (context isolation and sandbox on, no Node in the page);
+- opens web links (Ko-fi, TMDB) in your usual browser and never navigates away from the app;
+- has a menu with editing shortcuts, full screen and **Show Library Folder**; one copy runs at a time;
+- on quit, closes the windows first so a film page sends its last autosave as it closes, and stops the server 1.5 s later.
+
+Electron rather than Tauri: the app needs its Node server (files, the TMDB key, the wallpaper scripts), which Electron already includes; Tauri would mean a Rust rewrite or a bundled Node sidecar, and its system web views differ across platforms (WebGL especially).
+
+Since the server runs on your own computer, any website you visit could try to send it requests. `src/proxy.ts` rejects requests that change something unless they come from the app's own page (`Sec-Fetch-Site: same-origin`, and a matching `Origin` when sent; other localhost ports count as same-site, so that isn't enough). Since every API request passes through it, `experimental.proxyClientMaxBodySize` is raised to 20 MB for poster uploads (up to 15 MB).
+

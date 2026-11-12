@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "postinstall": "node -e \"require('fs').mkdirSync('public/rive',{recursive:true});require('fs').copyFileSync('node_modules/@rive-app/canvas/rive.wasm','public/rive/rive.wasm')\"",
-    "cat": "cd art/rive-cat && python3 generate.py && rive . --once && cp build/cat.riv ../../public/rive/cat.riv"
+    "cat": "cd art/rive-cat && python3 generate.py && rive . --once && cp build/cat.riv ../../public/rive/cat.riv",
+    "desktop:build": "node scripts/build-desktop.mjs",
+    "desktop": "npm run desktop:build && electron ."
   },
   "dependencies": {
     "@rive-app/canvas": "^2.45.0",
@@ -24,6 +26,9 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "main": "electron/main.mjs"
 }

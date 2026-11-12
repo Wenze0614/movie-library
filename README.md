@@ -15,6 +15,15 @@ npm run dev
 
 Open http://localhost:3000. On first run, a `data/` folder is created and filled with a few sample films so the shelf isn't empty. Delete them whenever you like.
 
+### As a desktop app
+
+```bash
+npm install
+npm run desktop
+```
+
+This builds the app and opens it in its own window (Electron). The desktop app keeps its library in its own folder, not in the project's `data/`: `~/Library/Application Support/Movie Diary/data` on a Mac, `%APPDATA%\Movie Diary\data` on Windows. **File › Show Library Folder** opens it. To bring your browser library across, quit the app and copy the contents of the project's `data/` folder there.
+
 ### Optional: automatic posters, story & cast
 
 1. Get a free API key at https://www.themoviedb.org/settings/api.

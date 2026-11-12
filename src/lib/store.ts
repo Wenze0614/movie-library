@@ -16,9 +16,10 @@ import type { Movie, MoviePatch } from './types';
  *     people/<person id>.json   (cached TMDB details, see people.ts)
  */
 // The data folder lives outside the build, so tell the bundler not to trace it.
-export const DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.CINEMA_DATA_DIR || path.join(process.cwd(), 'data'));
+export const DATA_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.CINEMA_DATA_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), 'data'));
 const MOVIES_DIR = path.join(DATA_DIR, 'movies');
-const SEED_DIR = path.join(/*turbopackIgnore: true*/ process.cwd(), 'seed', 'movies');
+// The desktop app passes its bundled copy of the sample films in CINEMA_SEED_DIR.
+const SEED_DIR = path.resolve(/*turbopackIgnore: true*/ process.env.CINEMA_SEED_DIR || path.join(/*turbopackIgnore: true*/ process.cwd(), 'seed', 'movies'));
 export const MEDIA_DIRS = {
   posters: path.join(DATA_DIR, 'posters'),
   backdrops: path.join(DATA_DIR, 'backdrops'),
