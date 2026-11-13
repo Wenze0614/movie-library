@@ -98,5 +98,5 @@
     "afterPack": "scripts/after-pack.cjs",
     "publish": null
   },
-  "license": "CC0-1.0"
+  "license": "MIT"
 }

@@ -105,4 +105,4 @@ Enjoying your cinema? Click the steaming mug on the windowsill, or [buy me a cof
 
 ## License
 
-Public domain: [CC0 1.0](LICENSE). Film data and images come from TMDB: this product uses the TMDB API but is not endorsed or certified by TMDB.
+[MIT](LICENSE): use, change and share it freely, keeping the copyright notice. Releases up to v0.1.0 were published under CC0 1.0. Film data and images come from TMDB: this product uses the TMDB API but is not endorsed or certified by TMDB.
