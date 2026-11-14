@@ -69,9 +69,14 @@ const SCENE = {
   mugCenter: new THREE.Vector3(0, 0.12, -1.866),
   mugTop: 0.72,
   catHead: CAT_STYLE === '2d' ? artToWorld(470, 175) : new THREE.Vector3(1.95, 1.1, 0.75),
-  /** Phones / portrait: points that must stay in frame (cat, mug, window). */
+  /**
+   * Phones / portrait: points that must stay in frame: the window, the cat,
+   * the mug, and the lamp's outer edge (its shade reaches z = -4.62 and its
+   * top y = 1.84; measured from table_light in the GLB).
+   */
   frameNarrow: [
     [-2.2, 3.9, 3.6], [-2.2, 3.9, -2.4], [1.8, 0.0, CAT_STYLE === '2d' ? 4.7 : 4.0], [1.8, 0.0, -2.4],
+    [-0.28, 1.84, -4.62], [-0.28, 0.1, -4.62], // [4] = the lamp's top, kept inside the collapsed banner too
   ],
 } as const;
 
@@ -123,6 +128,12 @@ const CAMERA = {
   /** Wide screens: the sill's front edge sits on the bottom of the frame. */
   floor: new THREE.Vector3(2.0, -0.05, -0.2),
   narrowFov: 24,
+  /**
+   * Narrow screens: where the sill's front edge sits (in -1…1 screen units).
+   * Higher than wide screens' -0.98 so the round buttons along the hero's
+   * bottom edge sit below the cat, mug and lamp rather than on top of them.
+   */
+  narrowFloorY: -0.72,
   parallax: new THREE.Vector2(0.6, 0.35),
 };
 
@@ -367,8 +378,27 @@ export class Experience {
    * then the camera slides vertically until the sill's front edge sits on the
    * bottom of the frame. When the hero collapses into a banner, CSS clips the
    * top, so the sill, cat and lamp stay in view.
-   * Narrow: pull back until the cat, mug and window fit.
+   * Narrow: pull back until the window, cat, mug and lamp fit, then lower
+   * the sill to just above the round buttons (CAMERA.narrowFloorY).
    */
+  /**
+   * Where the collapsed banner's top edge falls in the frame's -1…1 screen
+   * units. The canvas keeps its full height when the hero collapses; only its
+   * bottom (banner height minus the fade under it) stays visible. Null when
+   * the banner height can't be measured.
+   */
+  private bannerTopNdc(height: number, visibleH: number) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:var(--hero-banner)';
+    this.container.appendChild(probe);
+    const banner = probe.offsetHeight;
+    probe.remove();
+    if (!banner || banner >= height) return null;
+    const fade = parseFloat(getComputedStyle(this.container).getPropertyValue('--hero-fade')) || 0;
+    const topPx = height - (banner - fade);
+    return 1 - (2 * topPx) / visibleH;
+  }
+
   private fitCamera(width: number, height: number) {
     const inset = parseFloat(getComputedStyle(this.container).getPropertyValue('--sheet-overlap')) || 0;
     const visibleH = Math.max(1, height - inset);
@@ -415,20 +445,35 @@ export class Experience {
         else lo = d;
       }
       this.distance = hi;
-      // Tall screens have spare height: drop the sill to the bottom edge (as on
-      // wide screens) unless that would push the window top out of frame.
+      // Tall screens have spare height, so slide everything down. Raising the
+      // camera (target.y) moves things down the screen; yWhere finds the
+      // height that puts a point at a given screen y.
       const contained = this.target.clone();
-      let ylo = contained.y;
-      let yhi = contained.y + 6;
-      for (let i = 0; i < 24; i++) {
-        const y = (ylo + yhi) / 2;
-        this.target.y = y;
-        place(hi);
-        if (CAMERA.floor.clone().project(cam).y < -0.98) yhi = y;
-        else ylo = y;
+      const yWhere = (point: THREE.Vector3, ndcY: number) => {
+        let ylo = contained.y;
+        let yhi = contained.y + 6;
+        for (let i = 0; i < 24; i++) {
+          const y = (ylo + yhi) / 2;
+          this.target.y = y;
+          place(hi);
+          if (point.clone().project(cam).y < ndcY) yhi = y;
+          else ylo = y;
+        }
+        return (ylo + yhi) / 2;
+      };
+      // Aim for the sill just above the round buttons (CAMERA.narrowFloorY),
+      // but go lower (down to the bottom edge, as before) if that would lift
+      // the lamp's top out of the collapsed banner, which shows only the
+      // bottom of the canvas.
+      let y = yWhere(CAMERA.floor, CAMERA.narrowFloorY);
+      const bannerTop = this.bannerTopNdc(height, visibleH);
+      if (bannerTop !== null) {
+        const lampTop = new THREE.Vector3(...SCENE.frameNarrow[4]);
+        y = Math.min(Math.max(y, yWhere(lampTop, bannerTop - 0.03)), yWhere(CAMERA.floor, -0.98));
       }
-      this.target.y = ylo;
+      this.target.y = y;
       place(hi);
+      // ...unless that would push the window top out of frame.
       if (pts.some((p) => p.clone().project(cam).y > 0.97)) this.target.copy(contained);
     }
     // Tight near/far around the scene: with a long lens the camera is ~20
