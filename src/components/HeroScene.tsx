@@ -4,7 +4,7 @@ import type { Experience, HoverTarget } from '@/three/Experience';
 import { CAT_STYLE } from '@/three/catStyle';
 import { sceneAudio } from '@/audio/sceneAudio';
 import { COFFEE_URL } from '@/lib/support';
-import { MusicButton } from './MusicButton';
+import { MusicButton, useJazz } from './MusicButton';
 import { WithVolume } from './VolumeControl';
 import { useRiveCat } from './useRiveCat';
 
@@ -62,6 +62,7 @@ export function HeroScene() {
   const [lampOn, setLampOn] = useState(true);
   const [day, setDay] = useState(false);
   const [rain, setRain] = useState(false);
+  const jazz = useJazz();
   const [hover, setHover] = useState<{ target: HoverTarget; x: number; y: number }>({ target: null, x: 0, y: 0 });
   const [purrs, setPurrs] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
 
@@ -142,10 +143,18 @@ export function HeroScene() {
       )}
       <div ref={probeRef} className="hero-probe" aria-hidden="true" />
       <div className="hero-controls">
-        <WithVolume kind="jazz" label="Music volume">
-          <MusicButton />
+        <WithVolume kind="jazz" label="Music volume" on={jazz.playing} onTurnOn={jazz.turnOn}>
+          <MusicButton playing={jazz.playing} onToggle={jazz.toggle} />
         </WithVolume>
-        <WithVolume kind="rain" label="Rain volume">
+        <WithVolume
+          kind="rain"
+          label="Rain volume"
+          on={rain}
+          onTurnOn={() => {
+            exp.current?.setRain(true);
+            void sceneAudio.unlock();
+          }}
+        >
           <button
             type="button"
             className="rain-toggle"

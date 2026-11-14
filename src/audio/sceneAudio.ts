@@ -7,8 +7,8 @@ import type { RainSound } from './RainSound';
  * engine sleeps (costing no CPU) only when both are quiet.
  *
  * Browsers only allow sound after a user gesture, so nothing plays until a
- * scene button has been clicked; rain that was restored on page load starts
- * its sound on the next such click.
+ * scene button is clicked or a volume slider touched; rain that was restored
+ * on page load starts its sound on the next such gesture.
  */
 let ctx: AudioContext | null = null;
 let jazz: LofiJazz | null = null;
@@ -72,6 +72,14 @@ function sleepWhenQuiet() {
   }, 2500);
 }
 
+async function loadJazz() {
+  if (!jazz) {
+    const { LofiJazz } = await import('./LofiJazz');
+    jazz = new LofiJazz(context(), bus('jazz'));
+  }
+  return jazz;
+}
+
 async function startRain() {
   if (!rain) {
     const { RainSound } = await import('./RainSound');
@@ -89,20 +97,54 @@ export const sceneAudio = {
     if (rainWanted) await startRain();
   },
 
+  /**
+   * Call from the first touch of a volume slider (pointer or key down): starts
+   * the audio engine while the browser still counts it as a gesture, so the
+   * sound the slider turns on can play. Sleeps again if nothing does.
+   */
+  async prime() {
+    const woke = wake(); // resumes right away, inside the gesture
+    try {
+      await this.unlock();
+      await woke;
+    } catch (err) {
+      console.error('Audio could not start:', err);
+    }
+    sleepWhenQuiet();
+  },
+
+  /** Whether a gesture has let sound start yet. */
+  get unlocked() {
+    return unlocked;
+  },
+
+  /** Whether the jazz is playing right now. */
+  get jazzPlaying() {
+    return jazz?.playing ?? false;
+  },
+
   /** Plays or pauses the jazz; resolves to whether it's now playing. */
   async toggleJazz() {
     await this.unlock();
-    if (!jazz) {
-      const { LofiJazz } = await import('./LofiJazz');
-      jazz = new LofiJazz(context(), bus('jazz'));
-    }
-    if (jazz.playing) {
-      await jazz.pause();
+    const j = await loadJazz();
+    if (j.playing) {
+      await j.pause();
       sleepWhenQuiet();
       return false;
     }
     await wake();
-    await jazz.play();
+    await j.play();
+    return true;
+  },
+
+  /** Plays the jazz if it isn't already; resolves to true. */
+  async playJazz() {
+    await this.unlock();
+    const j = await loadJazz();
+    if (!j.playing) {
+      await wake();
+      await j.play();
+    }
     return true;
   },
 
